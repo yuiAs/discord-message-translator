@@ -12,8 +12,10 @@ export default defineConfig(({ mode }) => {
       environment: 'happy-dom',
       setupFiles: ['./vitest.setup.ts'],
       env: {
-        // Make GOOGLE_CLOUD_TRANSLATION_API_KEY available in tests
+        // Make API keys available in tests
         GOOGLE_CLOUD_TRANSLATION_API_KEY: env.GOOGLE_CLOUD_TRANSLATION_API_KEY || '',
+        DEEPL_API_KEY: env.DEEPL_API_KEY || '',
+        OPENAI_API_KEY: env.OPENAI_API_KEY || '',
       },
       coverage: {
         provider: 'v8',
