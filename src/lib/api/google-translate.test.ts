@@ -6,7 +6,8 @@ global.fetch = vi.fn();
 
 describe('GoogleTranslateClient', () => {
   let client: GoogleTranslateClient;
-  const apiKey = 'test-api-key';
+  // Use API key from environment variable or fallback to mock key for unit tests
+  const apiKey = process.env.GOOGLE_CLOUD_TRANSLATION_API_KEY || 'test-api-key';
 
   beforeEach(() => {
     vi.clearAllMocks();
