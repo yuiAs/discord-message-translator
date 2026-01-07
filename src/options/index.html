@@ -6,91 +6,231 @@
   <title>Discord Message Translator - Settings</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
-<body class="min-h-screen bg-base-200">
-  <div class="container mx-auto max-w-4xl p-8">
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold">Discord Message Translator</h1>
-      <p class="text-base-content/70 mt-2">Configure translation settings</p>
+<body class="min-h-screen bg-gradient-to-br from-base-200 to-base-300">
+  <div class="container mx-auto max-w-5xl p-6 md:p-8">
+    <!-- Header with Auto-save Status -->
+    <div class="mb-8 flex items-center justify-between">
+      <div>
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          Discord Message Translator
+        </h1>
+        <p class="text-base-content/70 mt-2">Configure your translation preferences</p>
+      </div>
+      <div id="autoSaveStatus" class="flex items-center gap-2 opacity-0 transition-opacity duration-300">
+        <span class="loading loading-spinner loading-sm text-primary hidden" id="savingSpinner"></span>
+        <span id="saveStatusText" class="text-sm text-success font-medium"></span>
+      </div>
     </div>
 
-    <!-- Translation Provider -->
-    <div class="card bg-base-100 shadow-xl mb-6">
-      <div class="card-body">
-        <h2 class="card-title">Translation Provider</h2>
+    <!-- Tabs Navigation -->
+    <div role="tablist" class="tabs tabs-boxed mb-6 bg-base-100 shadow-lg p-1">
+      <a role="tab" class="tab tab-active" data-tab="general">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        General
+      </a>
+      <a role="tab" class="tab" data-tab="api">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        API Keys
+      </a>
+      <a role="tab" class="tab" data-tab="cache">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+        </svg>
+        Cache
+      </a>
+    </div>
 
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Select Provider</span>
-          </label>
-          <select id="translationProvider" class="select select-bordered w-full">
-            <option value="google">Google Translate</option>
-            <option value="deepl" disabled>DeepL (Coming Soon)</option>
-            <option value="openai" disabled>OpenAI Compatible (Coming Soon)</option>
-          </select>
+    <!-- Tab Content -->
+    <div id="tabContent">
+      <!-- General Settings Tab -->
+      <div class="tab-panel active" data-panel="general">
+        <div class="grid gap-6">
+          <!-- Translation Mode -->
+          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+            <div class="card-body">
+              <h2 class="card-title text-xl mb-4">Translation Mode</h2>
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium">Display Mode</span>
+                  <span class="label-text-alt">How translations are shown</span>
+                </label>
+                <select id="translationMode" class="select select-bordered w-full">
+                  <option value="replace">Replace Original</option>
+                  <option value="append">Show Both (Original + Translation)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Auto-translate Toggle -->
+          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+            <div class="card-body">
+              <h2 class="card-title text-xl mb-4">Auto-Translation</h2>
+              <div class="form-control">
+                <label class="label cursor-pointer justify-start gap-4">
+                  <input type="checkbox" id="autoTranslate" class="toggle toggle-primary toggle-lg" checked />
+                  <div>
+                    <span class="label-text font-medium text-base">Enable automatic translation</span>
+                    <p class="text-sm text-base-content/60 mt-1">Automatically translate messages as they appear</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Target Language -->
+          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+            <div class="card-body">
+              <h2 class="card-title text-xl mb-4">Target Language</h2>
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium">Translate to</span>
+                </label>
+                <select id="targetLanguage" class="select select-bordered w-full">
+                  <option value="ja">Japanese (日本語)</option>
+                  <option value="en">English</option>
+                  <option value="ko">Korean (한국어)</option>
+                  <option value="zh-CN">Chinese Simplified (简体中文)</option>
+                  <option value="zh-TW">Chinese Traditional (繁體中文)</option>
+                  <option value="es">Spanish (Español)</option>
+                  <option value="fr">French (Français)</option>
+                  <option value="de">German (Deutsch)</option>
+                  <option value="pt">Portuguese (Português)</option>
+                  <option value="ru">Russian (Русский)</option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <!-- Google Translate API Key -->
-        <div id="googleApiKeySection" class="mt-4">
-          <div class="form-control w-full">
-            <label class="label">
-              <span class="label-text">Google Translate API Key</span>
-              <span class="label-text-alt">
-                <a href="https://cloud.google.com/translate/docs" target="_blank" class="link link-primary">
+      <!-- API Settings Tab -->
+      <div class="tab-panel hidden" data-panel="api">
+        <div class="grid gap-6">
+          <!-- Translation Provider -->
+          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+            <div class="card-body">
+              <h2 class="card-title text-xl mb-4">Translation Provider</h2>
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium">Select Provider</span>
+                </label>
+                <select id="translationProvider" class="select select-bordered w-full">
+                  <option value="google">Google Translate</option>
+                  <option value="deepl" disabled>DeepL (Coming Soon)</option>
+                  <option value="openai" disabled>OpenAI Compatible (Coming Soon)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Google Translate API Key -->
+          <div id="googleApiKeySection" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+            <div class="card-body">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title text-xl">Google Translate API</h2>
+                <a href="https://cloud.google.com/translate/docs" target="_blank" class="btn btn-sm btn-outline btn-primary">
                   Get API Key
                 </a>
-              </span>
-            </label>
-            <input
-              type="password"
-              id="googleApiKey"
-              placeholder="Enter your API key"
-              class="input input-bordered w-full"
-            />
+              </div>
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium">API Key</span>
+                  <span class="label-text-alt text-warning" id="apiKeyStatus"></span>
+                </label>
+                <div class="relative">
+                  <input
+                    type="password"
+                    id="googleApiKey"
+                    placeholder="Enter your Google Translate API key"
+                    class="input input-bordered w-full pr-24"
+                  />
+                  <button
+                    type="button"
+                    id="toggleApiKeyVisibility"
+                    class="btn btn-sm btn-ghost absolute right-1 top-1"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                </div>
+                <label class="label">
+                  <span class="label-text-alt">Your API key is stored locally and never shared</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cache Settings Tab -->
+      <div class="tab-panel hidden" data-panel="cache">
+        <div class="grid gap-6">
+          <!-- Cache TTL -->
+          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+            <div class="card-body">
+              <h2 class="card-title text-xl mb-4">Cache Duration</h2>
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium">Cache TTL (days)</span>
+                  <span class="label-text-alt">Default: 7 days</span>
+                </label>
+                <input
+                  type="range"
+                  id="cacheTTLDays"
+                  min="1"
+                  max="30"
+                  value="7"
+                  class="range range-primary"
+                  step="1"
+                />
+                <div class="w-full flex justify-between text-xs px-2 mt-2">
+                  <span>1 day</span>
+                  <span id="cacheTTLValue" class="font-bold text-primary">7 days</span>
+                  <span>30 days</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cache Actions -->
+          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+            <div class="card-body">
+              <h2 class="card-title text-xl mb-4">Cache Management</h2>
+              <div class="alert alert-info mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-sm">Cached translations reduce API costs and improve performance</span>
+              </div>
+              <button id="clearCache" class="btn btn-warning btn-block">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Clear All Cached Translations
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Cache Settings -->
-    <div class="card bg-base-100 shadow-xl mb-6">
-      <div class="card-body">
-        <h2 class="card-title">Cache Settings</h2>
-
-        <div class="form-control w-full">
-          <label class="label">
-            <span class="label-text">Cache TTL (days)</span>
-            <span class="label-text-alt">Default: 7 days</span>
-          </label>
-          <input
-            type="number"
-            id="cacheTTLDays"
-            min="1"
-            max="365"
-            placeholder="7"
-            class="input input-bordered w-full"
-          />
+    <!-- Toast Notification -->
+    <div id="toast" class="toast toast-top toast-end z-50">
+      <div id="toastAlert" class="alert shadow-lg hidden">
+        <div class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span id="toastText"></span>
         </div>
-
-        <div class="mt-4">
-          <button id="clearCache" class="btn btn-warning">
-            Clear All Cache
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Save Button -->
-    <div class="flex justify-end gap-4">
-      <button id="saveSettings" class="btn btn-primary">
-        Save Settings
-      </button>
-    </div>
-
-    <!-- Status Toast -->
-    <div id="toast" class="toast toast-top toast-end hidden">
-      <div id="toastAlert" class="alert alert-success">
-        <span id="toastText"></span>
       </div>
     </div>
   </div>
