@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord Message Translator - Settings</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body class="min-h-screen bg-base-200">
+  <div class="container mx-auto max-w-4xl p-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold">Discord Message Translator</h1>
+      <p class="text-base-content/70 mt-2">Configure translation settings</p>
+    </div>
+
+    <!-- Translation Provider -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+      <div class="card-body">
+        <h2 class="card-title">Translation Provider</h2>
+
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text">Select Provider</span>
+          </label>
+          <select id="translationProvider" class="select select-bordered w-full">
+            <option value="google">Google Translate</option>
+            <option value="deepl" disabled>DeepL (Coming Soon)</option>
+            <option value="openai" disabled>OpenAI Compatible (Coming Soon)</option>
+          </select>
+        </div>
+
+        <!-- Google Translate API Key -->
+        <div id="googleApiKeySection" class="mt-4">
+          <div class="form-control w-full">
+            <label class="label">
+              <span class="label-text">Google Translate API Key</span>
+              <span class="label-text-alt">
+                <a href="https://cloud.google.com/translate/docs" target="_blank" class="link link-primary">
+                  Get API Key
+                </a>
+              </span>
+            </label>
+            <input
+              type="password"
+              id="googleApiKey"
+              placeholder="Enter your API key"
+              class="input input-bordered w-full"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cache Settings -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+      <div class="card-body">
+        <h2 class="card-title">Cache Settings</h2>
+
+        <div class="form-control w-full">
+          <label class="label">
+            <span class="label-text">Cache TTL (days)</span>
+            <span class="label-text-alt">Default: 7 days</span>
+          </label>
+          <input
+            type="number"
+            id="cacheTTLDays"
+            min="1"
+            max="365"
+            placeholder="7"
+            class="input input-bordered w-full"
+          />
+        </div>
+
+        <div class="mt-4">
+          <button id="clearCache" class="btn btn-warning">
+            Clear All Cache
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="flex justify-end gap-4">
+      <button id="saveSettings" class="btn btn-primary">
+        Save Settings
+      </button>
+    </div>
+
+    <!-- Status Toast -->
+    <div id="toast" class="toast toast-top toast-end hidden">
+      <div id="toastAlert" class="alert alert-success">
+        <span id="toastText"></span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./index.ts"></script>
+</body>
+</html>
