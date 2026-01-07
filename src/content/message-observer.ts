@@ -1,23 +1,46 @@
 import { getSettings } from '@/lib/utils/settings';
 import { translateMessage } from '@/lib/utils/translator';
 import { isDiscordMessage, createDiscordMessage } from './message-utils';
+import { RequestQueue, debounce } from '@/lib/utils/async-control';
+
+// Configuration constants
+const MAX_CONCURRENT_REQUESTS = 3; // Limit concurrent translation API requests
+const DEBOUNCE_DELAY = 100; // Debounce delay in milliseconds for batch processing
 
 export class MessageTranslationObserver {
   private intersectionObserver: IntersectionObserver;
   private mutationObserver: MutationObserver;
   private observedMessages = new Set<string>(); // Message IDs already being observed
   private translatedMessages = new Set<string>(); // Message IDs already translated
+  private translationQueue: RequestQueue; // Request queue for rate limiting
+  private pendingMessages: Map<string, HTMLElement> = new Map(); // Messages waiting to be processed
+  private processPendingDebounced: () => void;
 
   constructor() {
+    // Initialize request queue with concurrency limit
+    this.translationQueue = new RequestQueue(MAX_CONCURRENT_REQUESTS);
+
+    // Debounced batch processor
+    this.processPendingDebounced = debounce(() => {
+      this.processPendingMessages();
+    }, DEBOUNCE_DELAY);
+
     // Intersection Observer: Translate messages that enter the visible area
     this.intersectionObserver = new IntersectionObserver(
       (entries) => {
-        entries.forEach(async (entry) => {
+        // Collect all intersecting messages
+        entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const messageElement = entry.target as HTMLElement;
-            await this.handleVisibleMessage(messageElement);
+            const message = createDiscordMessage(messageElement);
+            if (message && !this.translatedMessages.has(message.id)) {
+              this.pendingMessages.set(message.id, messageElement);
+            }
           }
         });
+
+        // Process messages in batches using debounce
+        this.processPendingDebounced();
       },
       {
         root: null, // Use viewport as root
@@ -65,15 +88,52 @@ export class MessageTranslationObserver {
     }
   }
 
-  private async handleVisibleMessage(element: HTMLElement) {
-    const message = createDiscordMessage(element);
-    if (!message || this.translatedMessages.has(message.id)) {
-      return; // Already translated
+  /**
+   * Process pending messages in batch with rate limiting
+   */
+  private async processPendingMessages() {
+    if (this.pendingMessages.size === 0) {
+      return;
     }
 
     const settings = await getSettings();
     if (!settings.autoTranslate) {
-      return; // Auto-translate is off
+      this.pendingMessages.clear();
+      return;
+    }
+
+    // Process all pending messages through the request queue
+    const messagesToProcess = Array.from(this.pendingMessages.entries());
+    this.pendingMessages.clear();
+
+    console.log(`[MessageObserver] Processing ${messagesToProcess.length} messages (queue: ${this.translationQueue.getQueueSize()}, running: ${this.translationQueue.getRunningCount()})`);
+
+    for (const [messageId, element] of messagesToProcess) {
+      // Skip if already translated
+      if (this.translatedMessages.has(messageId)) {
+        continue;
+      }
+
+      // Add to queue with rate limiting
+      this.translationQueue.add(async () => {
+        await this.handleVisibleMessage(element, messageId, settings);
+      }).catch((error) => {
+        console.error(`[MessageObserver] Translation failed for message ${messageId}:`, error);
+      });
+    }
+  }
+
+  /**
+   * Handle translation for a single visible message
+   */
+  private async handleVisibleMessage(
+    element: HTMLElement,
+    messageId: string,
+    settings: Awaited<ReturnType<typeof getSettings>>
+  ) {
+    const message = createDiscordMessage(element);
+    if (!message || this.translatedMessages.has(message.id)) {
+      return; // Already translated
     }
 
     try {
@@ -88,6 +148,7 @@ export class MessageTranslationObserver {
       this.translatedMessages.add(message.id);
     } catch (error) {
       console.error(`[MessageObserver] Translation failed for message ${message.id}:`, error);
+      throw error; // Re-throw to be caught by queue handler
     }
   }
 
@@ -118,5 +179,7 @@ export class MessageTranslationObserver {
     this.mutationObserver.disconnect();
     this.observedMessages.clear();
     this.translatedMessages.clear();
+    this.pendingMessages.clear();
+    this.translationQueue.clear();
   }
 }
