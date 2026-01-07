@@ -162,4 +162,99 @@ describe('ChromeStorageCache', () => {
       expect(chrome.storage.local.remove).toHaveBeenCalledWith(['cache_expired']);
     });
   });
+
+  describe('getStats', () => {
+    it('should return stats for empty cache', async () => {
+      vi.mocked(chrome.storage.local.get).mockResolvedValue({});
+      vi.mocked(chrome.storage.local.getBytesInUse).mockResolvedValue(0);
+      vi.mocked(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
+
+      const stats = await cache.getStats();
+
+      expect(stats.entryCount).toBe(0);
+      expect(stats.bytesInUse).toBe(0);
+      expect(stats.maxBytes).toBe(10 * 1024 * 1024); // 10MB
+      expect(stats.usagePercent).toBe(0);
+      expect(stats.expiredCount).toBe(0);
+    });
+
+    it('should return stats with cached entries', async () => {
+      const now = Date.now();
+      const entry1: TranslationCacheEntry = {
+        translations: { en: 'Hello', ja: 'こんにちは' },
+        timestamp: now,
+      };
+      const entry2: TranslationCacheEntry = {
+        translations: { en: 'World' },
+        timestamp: now,
+      };
+
+      vi.mocked(chrome.storage.local.get).mockResolvedValue({
+        cache_message1: entry1,
+        cache_message2: entry2,
+      });
+
+      vi.mocked(chrome.storage.local.getBytesInUse).mockResolvedValue(5 * 1024 * 1024); // 5MB
+      vi.mocked(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
+
+      const stats = await cache.getStats();
+
+      expect(stats.entryCount).toBe(2);
+      expect(stats.bytesInUse).toBe(5 * 1024 * 1024);
+      expect(stats.maxBytes).toBe(10 * 1024 * 1024);
+      expect(stats.usagePercent).toBe(50);
+      expect(stats.expiredCount).toBe(0);
+    });
+
+    it('should count expired entries correctly', async () => {
+      const now = Date.now();
+      const validEntry: TranslationCacheEntry = {
+        translations: { en: 'Valid' },
+        timestamp: now,
+      };
+      const expiredEntry1: TranslationCacheEntry = {
+        translations: { en: 'Expired 1' },
+        timestamp: now - 10 * 24 * 60 * 60 * 1000, // 10 days ago
+      };
+      const expiredEntry2: TranslationCacheEntry = {
+        translations: { en: 'Expired 2' },
+        timestamp: now - 8 * 24 * 60 * 60 * 1000, // 8 days ago
+      };
+
+      vi.mocked(chrome.storage.local.get).mockResolvedValue({
+        cache_valid: validEntry,
+        cache_expired1: expiredEntry1,
+        cache_expired2: expiredEntry2,
+      });
+
+      vi.mocked(chrome.storage.local.getBytesInUse).mockResolvedValue(2 * 1024 * 1024); // 2MB
+      vi.mocked(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
+
+      const stats = await cache.getStats();
+
+      expect(stats.entryCount).toBe(3);
+      expect(stats.expiredCount).toBe(2);
+      expect(stats.usagePercent).toBe(20);
+    });
+
+    it('should calculate usage percent correctly for high usage', async () => {
+      const now = Date.now();
+      const entry: TranslationCacheEntry = {
+        translations: { en: 'Test' },
+        timestamp: now,
+      };
+
+      vi.mocked(chrome.storage.local.get).mockResolvedValue({
+        cache_message1: entry,
+      });
+
+      vi.mocked(chrome.storage.local.getBytesInUse).mockResolvedValue(9 * 1024 * 1024); // 9MB (90%)
+      vi.mocked(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
+
+      const stats = await cache.getStats();
+
+      expect(stats.entryCount).toBe(1);
+      expect(stats.usagePercent).toBe(90);
+    });
+  });
 });

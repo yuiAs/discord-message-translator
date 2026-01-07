@@ -20,6 +20,12 @@ const openaiModelInput = document.getElementById('openaiModel') as HTMLInputElem
 const cacheTTLDaysInput = document.getElementById('cacheTTLDays') as HTMLInputElement;
 const cacheTTLValue = document.getElementById('cacheTTLValue') as HTMLSpanElement;
 const clearCacheButton = document.getElementById('clearCache') as HTMLButtonElement;
+const refreshCacheStatsButton = document.getElementById('refreshCacheStats') as HTMLButtonElement;
+const cacheUsageProgress = document.getElementById('cacheUsageProgress') as HTMLProgressElement;
+const cacheUsageText = document.getElementById('cacheUsageText') as HTMLSpanElement;
+const cacheBytesUsed = document.getElementById('cacheBytesUsed') as HTMLSpanElement;
+const cacheEntryCount = document.getElementById('cacheEntryCount') as HTMLSpanElement;
+const cacheExpiredCount = document.getElementById('cacheExpiredCount') as HTMLSpanElement;
 const toastAlert = document.getElementById('toastAlert') as HTMLDivElement;
 const toastText = document.getElementById('toastText') as HTMLSpanElement;
 const autoSaveStatus = document.getElementById('autoSaveStatus') as HTMLDivElement;
@@ -131,6 +137,47 @@ async function loadSettings() {
 // Update cache TTL display
 function updateCacheTTLDisplay(days: number) {
   cacheTTLValue.textContent = `${days} day${days > 1 ? 's' : ''}`;
+}
+
+// Format bytes to human-readable format
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+// Load and display cache statistics
+async function loadCacheStats() {
+  try {
+    const storage = await createStorage();
+    const stats = await storage.getStats();
+
+    // Update progress bar
+    cacheUsageProgress.value = stats.usagePercent;
+    cacheUsageText.textContent = `${stats.usagePercent}%`;
+
+    // Update bytes used
+    cacheBytesUsed.textContent = formatBytes(stats.bytesInUse);
+
+    // Update entry count
+    cacheEntryCount.textContent = stats.entryCount.toString();
+
+    // Update expired count
+    cacheExpiredCount.textContent = stats.expiredCount.toString();
+
+    // Change progress bar color based on usage
+    if (stats.usagePercent >= 80) {
+      cacheUsageProgress.className = 'progress progress-error w-full h-4';
+    } else if (stats.usagePercent >= 60) {
+      cacheUsageProgress.className = 'progress progress-warning w-full h-4';
+    } else {
+      cacheUsageProgress.className = 'progress progress-primary w-full h-4';
+    }
+  } catch (error) {
+    console.error('Failed to load cache stats:', error);
+    cacheUsageText.textContent = 'Error';
+  }
 }
 
 // Translation Provider change
@@ -245,6 +292,23 @@ cacheTTLDaysInput.addEventListener('input', () => {
   autoSave({ cacheTTLDays: days });
 });
 
+// Refresh cache stats
+refreshCacheStatsButton.addEventListener('click', async () => {
+  try {
+    refreshCacheStatsButton.disabled = true;
+    refreshCacheStatsButton.classList.add('loading');
+
+    await loadCacheStats();
+    showToast('Cache statistics refreshed', 'success');
+  } catch (error) {
+    console.error('Failed to refresh cache stats:', error);
+    showToast('Failed to refresh cache statistics', 'error');
+  } finally {
+    refreshCacheStatsButton.disabled = false;
+    refreshCacheStatsButton.classList.remove('loading');
+  }
+});
+
 // Clear cache
 clearCacheButton.addEventListener('click', async () => {
   if (!confirm('Are you sure you want to clear all cached translations?')) {
@@ -258,6 +322,9 @@ clearCacheButton.addEventListener('click', async () => {
     const storage = await createStorage();
     await storage.clear();
 
+    // Refresh stats after clearing
+    await loadCacheStats();
+
     showToast('Cache cleared successfully!', 'success');
   } catch (error) {
     console.error('Failed to clear cache:', error);
@@ -270,3 +337,4 @@ clearCacheButton.addEventListener('click', async () => {
 
 // Initialize
 loadSettings();
+loadCacheStats();

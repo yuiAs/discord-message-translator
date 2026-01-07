@@ -119,4 +119,32 @@ export class ChromeStorageCache implements ITranslationStorage {
       console.log(`[Cache] Cleaned up ${toDelete.length} old entries`);
     }
   }
+
+  /**
+   * Get cache statistics including usage and expired entry count
+   */
+  async getStats(): Promise<import('./types').CacheStats> {
+    const entries = await this.getAllEntries();
+    const bytesInUse = await chrome.storage.local.getBytesInUse(null);
+    const usagePercent = Math.round((bytesInUse / MAX_STORAGE_BYTES) * 100);
+
+    // Count expired entries
+    const ttlMs = (await this.getTTLDays()) * 24 * 60 * 60 * 1000;
+    const cutoffTime = Date.now() - ttlMs;
+    let expiredCount = 0;
+
+    for (const [, entry] of entries) {
+      if (entry.timestamp < cutoffTime) {
+        expiredCount++;
+      }
+    }
+
+    return {
+      entryCount: entries.size,
+      bytesInUse,
+      maxBytes: MAX_STORAGE_BYTES,
+      usagePercent,
+      expiredCount,
+    };
+  }
 }
