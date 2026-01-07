@@ -140,6 +140,9 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
+# TypeScript build output
+.tmp/
+
 # Claude Code
 CLAUDE.md
 .claude/
