@@ -1,11 +1,12 @@
 import { getSettings } from '@/lib/utils/settings';
-import { translateMessage } from '@/lib/utils/translator';
+import { translateMessage, translateMessageBatch } from '@/lib/utils/translator';
 import { isDiscordMessage, createDiscordMessage } from './message-utils';
 import { RequestQueue, debounce } from '@/lib/utils/async-control';
 
 // Configuration constants
 const MAX_CONCURRENT_REQUESTS = 3; // Limit concurrent translation API requests
 const DEBOUNCE_DELAY = 100; // Debounce delay in milliseconds for batch processing
+const BATCH_SIZE = 10; // Number of messages to translate in a single batch
 
 export class MessageTranslationObserver {
   private intersectionObserver: IntersectionObserver;
@@ -90,6 +91,7 @@ export class MessageTranslationObserver {
 
   /**
    * Process pending messages in batch with rate limiting
+   * Uses batch translation API when multiple messages are pending
    */
   private async processPendingMessages() {
     if (this.pendingMessages.size === 0) {
@@ -102,24 +104,82 @@ export class MessageTranslationObserver {
       return;
     }
 
-    // Process all pending messages through the request queue
+    // Get all pending messages
     const messagesToProcess = Array.from(this.pendingMessages.entries());
     this.pendingMessages.clear();
 
-    console.log(`[MessageObserver] Processing ${messagesToProcess.length} messages (queue: ${this.translationQueue.getQueueSize()}, running: ${this.translationQueue.getRunningCount()})`);
+    // Filter out already translated messages
+    const filteredMessages = messagesToProcess.filter(
+      ([messageId]) => !this.translatedMessages.has(messageId)
+    );
 
-    for (const [messageId, element] of messagesToProcess) {
-      // Skip if already translated
-      if (this.translatedMessages.has(messageId)) {
-        continue;
+    if (filteredMessages.length === 0) {
+      return;
+    }
+
+    console.log(`[MessageObserver] Processing ${filteredMessages.length} messages (queue: ${this.translationQueue.getQueueSize()}, running: ${this.translationQueue.getRunningCount()})`);
+
+    // Process messages in batches for efficiency
+    if (filteredMessages.length >= BATCH_SIZE) {
+      // Use batch translation for better performance
+      this.translationQueue.add(async () => {
+        await this.handleVisibleMessagesBatch(filteredMessages, settings);
+      }).catch((error) => {
+        console.error(`[MessageObserver] Batch translation failed:`, error);
+      });
+    } else {
+      // For small numbers, use individual translation
+      for (const [messageId, element] of filteredMessages) {
+        this.translationQueue.add(async () => {
+          await this.handleVisibleMessage(element, messageId, settings);
+        }).catch((error) => {
+          console.error(`[MessageObserver] Translation failed for message ${messageId}:`, error);
+        });
+      }
+    }
+  }
+
+  /**
+   * Handle batch translation for multiple visible messages
+   * More efficient than translating individually
+   */
+  private async handleVisibleMessagesBatch(
+    messagePairs: Array<[string, HTMLElement]>,
+    settings: Awaited<ReturnType<typeof getSettings>>
+  ) {
+    const batchMessages = messagePairs
+      .map(([messageId, element]) => {
+        const message = createDiscordMessage(element);
+        if (!message || this.translatedMessages.has(message.id)) {
+          return null;
+        }
+        return { id: message.id, content: message.content, element };
+      })
+      .filter((m): m is NonNullable<typeof m> => m !== null);
+
+    if (batchMessages.length === 0) {
+      return;
+    }
+
+    try {
+      const translations = await translateMessageBatch(
+        batchMessages.map(m => ({ id: m.id, content: m.content })),
+        settings.targetLanguage
+      );
+
+      // Inject all translations into DOM
+      for (const { id, element } of batchMessages) {
+        const translation = translations.get(id);
+        if (translation) {
+          this.injectTranslation(element, translation, settings.translationMode);
+          this.translatedMessages.add(id);
+        }
       }
 
-      // Add to queue with rate limiting
-      this.translationQueue.add(async () => {
-        await this.handleVisibleMessage(element, messageId, settings);
-      }).catch((error) => {
-        console.error(`[MessageObserver] Translation failed for message ${messageId}:`, error);
-      });
+      console.log(`[MessageObserver] Batch translated ${batchMessages.length} messages`);
+    } catch (error) {
+      console.error('[MessageObserver] Batch translation failed:', error);
+      throw error;
     }
   }
 

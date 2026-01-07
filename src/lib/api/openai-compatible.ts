@@ -89,6 +89,79 @@ Rules:
   }
 
   /**
+   * Translate multiple texts in a single API request
+   * More efficient for batch processing
+   */
+  async translateBatch(texts: string[], targetLang: string, _sourceLang?: string): Promise<string[]> {
+    if (texts.length === 0) {
+      return [];
+    }
+
+    const targetLanguageName = this.getLanguageName(targetLang);
+
+    // Create numbered list of texts to translate
+    const numberedTexts = texts.map((text, i) => `${i + 1}. ${text}`).join('\n');
+
+    const systemPrompt = `You are a professional translator. Your task is to translate multiple texts to ${targetLanguageName}.
+Rules:
+- Automatically detect the source language for each text
+- Provide translations in JSON array format: ["translation1", "translation2", ...]
+- Preserve the original formatting and tone
+- Return ONLY the JSON array, no explanations or additional content`;
+
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: systemPrompt,
+      },
+      {
+        role: 'user',
+        content: `Translate these texts:\n${numberedTexts}`,
+      },
+    ];
+
+    const requestBody: ChatCompletionRequest = {
+      model: this.config.model,
+      messages,
+      temperature: 0.3,
+      max_tokens: 2000,
+    };
+
+    const response = await fetch(`${this.config.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.config.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: { message: response.statusText } }));
+      throw new Error(`OpenAI API Error: ${error.error?.message || response.statusText}`);
+    }
+
+    const data: ChatCompletionResponse = await response.json();
+    const content = data.choices[0]?.message?.content?.trim();
+
+    if (!content) {
+      throw new Error('OpenAI API returned empty translation');
+    }
+
+    try {
+      // Parse JSON response
+      const translations = JSON.parse(content);
+      if (!Array.isArray(translations) || translations.length !== texts.length) {
+        throw new Error('Invalid translation array length');
+      }
+      return translations;
+    } catch (error) {
+      console.error('[OpenAI] Failed to parse batch translation:', content);
+      throw new Error(`Failed to parse batch translation response: ${error}`);
+    }
+  }
+
+  /**
    * Convert language code to full language name for better LLM understanding
    */
   private getLanguageName(langCode: string): string {

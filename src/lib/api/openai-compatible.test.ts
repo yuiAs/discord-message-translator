@@ -205,4 +205,92 @@ describe('OpenAICompatibleClient', () => {
       );
     });
   });
+
+  describe('translateBatch', () => {
+    it('should translate multiple texts in a single request', async () => {
+      const mockResponse = {
+        choices: [{
+          message: {
+            content: '["Bonjour", "Au revoir", "Merci"]',
+          },
+        }],
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await client.translateBatch(['Hello', 'Goodbye', 'Thanks'], 'fr');
+
+      expect(result).toEqual(['Bonjour', 'Au revoir', 'Merci']);
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return empty array for empty input', async () => {
+      const result = await client.translateBatch([], 'fr');
+      expect(result).toEqual([]);
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('should include numbered texts in user message', async () => {
+      const mockResponse = {
+        choices: [{
+          message: {
+            content: '["Hola", "Adiós"]',
+          },
+        }],
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse,
+      } as Response);
+
+      await client.translateBatch(['Hello', 'Goodbye'], 'es');
+
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+      expect(body.messages[1].content).toContain('1. Hello');
+      expect(body.messages[1].content).toContain('2. Goodbye');
+    });
+
+    it('should throw error if response is not valid JSON array', async () => {
+      const mockResponse = {
+        choices: [{
+          message: {
+            content: 'Not a JSON array',
+          },
+        }],
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse,
+      } as Response);
+
+      await expect(client.translateBatch(['Hello', 'Goodbye'], 'fr')).rejects.toThrow(
+        'Failed to parse batch translation response'
+      );
+    });
+
+    it('should throw error if array length does not match', async () => {
+      const mockResponse = {
+        choices: [{
+          message: {
+            content: '["Bonjour"]', // Only 1 translation for 2 texts
+          },
+        }],
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse,
+      } as Response);
+
+      await expect(client.translateBatch(['Hello', 'Goodbye'], 'fr')).rejects.toThrow(
+        'Failed to parse batch translation response'
+      );
+    });
+  });
 });

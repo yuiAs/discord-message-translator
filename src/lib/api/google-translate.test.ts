@@ -102,4 +102,57 @@ describe('GoogleTranslateClient', () => {
       expect(callArgs[0]).toContain(`key=${apiKey}`);
     });
   });
+
+  describe('translateBatch', () => {
+    it('should translate multiple texts in a single request', async () => {
+      const mockResponse = {
+        data: {
+          translations: [
+            { translatedText: 'Bonjour' },
+            { translatedText: 'Au revoir' },
+            { translatedText: 'Merci' },
+          ],
+        },
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await client.translateBatch(['Hello', 'Goodbye', 'Thanks'], 'fr');
+
+      expect(result).toEqual(['Bonjour', 'Au revoir', 'Merci']);
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return empty array for empty input', async () => {
+      const result = await client.translateBatch([], 'fr');
+      expect(result).toEqual([]);
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('should include all texts as q parameters', async () => {
+      const mockResponse = {
+        data: {
+          translations: [
+            { translatedText: 'Hola' },
+            { translatedText: 'Adiós' },
+          ],
+        },
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse,
+      } as Response);
+
+      await client.translateBatch(['Hello', 'Goodbye'], 'es');
+
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const url = callArgs[0] as string;
+      expect(url).toContain('q=Hello');
+      expect(url).toContain('q=Goodbye');
+    });
+  });
 });

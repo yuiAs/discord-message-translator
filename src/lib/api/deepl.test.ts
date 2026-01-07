@@ -146,4 +146,52 @@ describe('DeepLClient', () => {
       expect(body.target_lang).toBe('PT-BR');
     });
   });
+
+  describe('translateBatch', () => {
+    it('should translate multiple texts in a single request', async () => {
+      const mockResponse = {
+        translations: [
+          { text: 'Bonjour' },
+          { text: 'Au revoir' },
+          { text: 'Merci' },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse,
+      } as Response);
+
+      const result = await client.translateBatch(['Hello', 'Goodbye', 'Thanks'], 'fr');
+
+      expect(result).toEqual(['Bonjour', 'Au revoir', 'Merci']);
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return empty array for empty input', async () => {
+      const result = await client.translateBatch([], 'fr');
+      expect(result).toEqual([]);
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('should send array of texts in request body', async () => {
+      const mockResponse = {
+        translations: [
+          { text: 'Hola' },
+          { text: 'Adiós' },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse,
+      } as Response);
+
+      await client.translateBatch(['Hello', 'Goodbye'], 'es');
+
+      const callArgs = vi.mocked(fetch).mock.calls[0];
+      const body = JSON.parse(callArgs[1]?.body as string);
+      expect(body.text).toEqual(['Hello', 'Goodbye']);
+    });
+  });
 });
