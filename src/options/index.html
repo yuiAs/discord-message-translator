@@ -122,8 +122,8 @@
                 </label>
                 <select id="translationProvider" class="select select-bordered w-full">
                   <option value="google">Google Translate</option>
-                  <option value="deepl" disabled>DeepL (Coming Soon)</option>
-                  <option value="openai" disabled>OpenAI Compatible (Coming Soon)</option>
+                  <option value="deepl">DeepL</option>
+                  <option value="openai">OpenAI Compatible</option>
                 </select>
               </div>
             </div>
@@ -141,7 +141,6 @@
               <div class="form-control w-full">
                 <label class="label">
                   <span class="label-text font-medium">API Key</span>
-                  <span class="label-text-alt text-warning" id="apiKeyStatus"></span>
                 </label>
                 <div class="relative">
                   <input
@@ -152,7 +151,7 @@
                   />
                   <button
                     type="button"
-                    id="toggleApiKeyVisibility"
+                    id="toggleGoogleApiKeyVisibility"
                     class="btn btn-sm btn-ghost absolute right-1 top-1"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -163,6 +162,110 @@
                 </div>
                 <label class="label">
                   <span class="label-text-alt">Your API key is stored locally and never shared</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- DeepL API Key -->
+          <div id="deeplApiKeySection" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+            <div class="card-body">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title text-xl">DeepL API</h2>
+                <a href="https://www.deepl.com/pro-api" target="_blank" class="btn btn-sm btn-outline btn-primary">
+                  Get API Key
+                </a>
+              </div>
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium">API Key</span>
+                </label>
+                <div class="relative">
+                  <input
+                    type="password"
+                    id="deeplApiKey"
+                    placeholder="Enter your DeepL API key"
+                    class="input input-bordered w-full pr-24"
+                  />
+                  <button
+                    type="button"
+                    id="toggleDeeplApiKeyVisibility"
+                    class="btn btn-sm btn-ghost absolute right-1 top-1"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                </div>
+                <label class="label">
+                  <span class="label-text-alt">Supports both free and paid accounts</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- OpenAI Compatible API -->
+          <div id="openaiApiSection" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+            <div class="card-body">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title text-xl">OpenAI Compatible API</h2>
+                <a href="https://platform.openai.com/api-keys" target="_blank" class="btn btn-sm btn-outline btn-primary">
+                  Get API Key
+                </a>
+              </div>
+
+              <div class="form-control w-full mb-4">
+                <label class="label">
+                  <span class="label-text font-medium">API Key</span>
+                </label>
+                <div class="relative">
+                  <input
+                    type="password"
+                    id="openaiApiKey"
+                    placeholder="Enter your API key"
+                    class="input input-bordered w-full pr-24"
+                  />
+                  <button
+                    type="button"
+                    id="toggleOpenaiApiKeyVisibility"
+                    class="btn btn-sm btn-ghost absolute right-1 top-1"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-control w-full mb-4">
+                <label class="label">
+                  <span class="label-text font-medium">Base URL</span>
+                </label>
+                <input
+                  type="text"
+                  id="openaiBaseUrl"
+                  placeholder="https://api.openai.com/v1"
+                  class="input input-bordered w-full"
+                />
+                <label class="label">
+                  <span class="label-text-alt">e.g., https://api.openai.com/v1 or custom endpoint</span>
+                </label>
+              </div>
+
+              <div class="form-control w-full">
+                <label class="label">
+                  <span class="label-text font-medium">Model</span>
+                </label>
+                <input
+                  type="text"
+                  id="openaiModel"
+                  placeholder="gpt-4"
+                  class="input input-bordered w-full"
+                />
+                <label class="label">
+                  <span class="label-text-alt">e.g., gpt-4, gpt-3.5-turbo, claude-3-5-sonnet-20241022</span>
                 </label>
               </div>
             </div>

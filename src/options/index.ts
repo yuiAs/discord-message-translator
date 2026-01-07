@@ -10,7 +10,13 @@ const translationModeSelect = document.getElementById('translationMode') as HTML
 const autoTranslateToggle = document.getElementById('autoTranslate') as HTMLInputElement;
 const targetLanguageSelect = document.getElementById('targetLanguage') as HTMLSelectElement;
 const googleApiKeyInput = document.getElementById('googleApiKey') as HTMLInputElement;
-const toggleApiKeyVisibility = document.getElementById('toggleApiKeyVisibility') as HTMLButtonElement;
+const toggleGoogleApiKeyVisibility = document.getElementById('toggleGoogleApiKeyVisibility') as HTMLButtonElement;
+const deeplApiKeyInput = document.getElementById('deeplApiKey') as HTMLInputElement;
+const toggleDeeplApiKeyVisibility = document.getElementById('toggleDeeplApiKeyVisibility') as HTMLButtonElement;
+const openaiApiKeyInput = document.getElementById('openaiApiKey') as HTMLInputElement;
+const toggleOpenaiApiKeyVisibility = document.getElementById('toggleOpenaiApiKeyVisibility') as HTMLButtonElement;
+const openaiBaseUrlInput = document.getElementById('openaiBaseUrl') as HTMLInputElement;
+const openaiModelInput = document.getElementById('openaiModel') as HTMLInputElement;
 const cacheTTLDaysInput = document.getElementById('cacheTTLDays') as HTMLInputElement;
 const cacheTTLValue = document.getElementById('cacheTTLValue') as HTMLSpanElement;
 const clearCacheButton = document.getElementById('clearCache') as HTMLButtonElement;
@@ -114,6 +120,10 @@ async function loadSettings() {
   autoTranslateToggle.checked = settings.autoTranslate;
   targetLanguageSelect.value = settings.targetLanguage;
   googleApiKeyInput.value = settings.apiKeys.google || '';
+  deeplApiKeyInput.value = settings.apiKeys.deepl || '';
+  openaiApiKeyInput.value = settings.apiKeys.openai || '';
+  openaiBaseUrlInput.value = settings.openaiConfig?.baseUrl || 'https://api.openai.com/v1';
+  openaiModelInput.value = settings.openaiConfig?.model || 'gpt-4';
   cacheTTLDaysInput.value = settings.cacheTTLDays.toString();
   updateCacheTTLDisplay(settings.cacheTTLDays);
 }
@@ -157,12 +167,74 @@ googleApiKeyInput.addEventListener('input', () => {
   });
 });
 
-// Toggle API Key visibility
-toggleApiKeyVisibility.addEventListener('click', () => {
+// DeepL API Key input
+deeplApiKeyInput.addEventListener('input', () => {
+  const apiKey = deeplApiKeyInput.value.trim();
+  autoSave({
+    apiKeys: {
+      deepl: apiKey || undefined,
+    },
+  });
+});
+
+// OpenAI API Key input
+openaiApiKeyInput.addEventListener('input', () => {
+  const apiKey = openaiApiKeyInput.value.trim();
+  const baseUrl = openaiBaseUrlInput.value.trim() || 'https://api.openai.com/v1';
+  const model = openaiModelInput.value.trim() || 'gpt-4';
+
+  autoSave({
+    apiKeys: {
+      openai: apiKey || undefined,
+    },
+    openaiConfig: apiKey ? { baseUrl, model } : undefined,
+  });
+});
+
+// OpenAI Base URL input
+openaiBaseUrlInput.addEventListener('input', () => {
+  const baseUrl = openaiBaseUrlInput.value.trim() || 'https://api.openai.com/v1';
+  const model = openaiModelInput.value.trim() || 'gpt-4';
+
+  autoSave({
+    openaiConfig: { baseUrl, model },
+  });
+});
+
+// OpenAI Model input
+openaiModelInput.addEventListener('input', () => {
+  const baseUrl = openaiBaseUrlInput.value.trim() || 'https://api.openai.com/v1';
+  const model = openaiModelInput.value.trim() || 'gpt-4';
+
+  autoSave({
+    openaiConfig: { baseUrl, model },
+  });
+});
+
+// Toggle Google API Key visibility
+toggleGoogleApiKeyVisibility.addEventListener('click', () => {
   if (googleApiKeyInput.type === 'password') {
     googleApiKeyInput.type = 'text';
   } else {
     googleApiKeyInput.type = 'password';
+  }
+});
+
+// Toggle DeepL API Key visibility
+toggleDeeplApiKeyVisibility.addEventListener('click', () => {
+  if (deeplApiKeyInput.type === 'password') {
+    deeplApiKeyInput.type = 'text';
+  } else {
+    deeplApiKeyInput.type = 'password';
+  }
+});
+
+// Toggle OpenAI API Key visibility
+toggleOpenaiApiKeyVisibility.addEventListener('click', () => {
+  if (openaiApiKeyInput.type === 'password') {
+    openaiApiKeyInput.type = 'text';
+  } else {
+    openaiApiKeyInput.type = 'password';
   }
 });
 
