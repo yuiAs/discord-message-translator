@@ -109,7 +109,7 @@ discord-message-translator/
 ├── public/
 │   ├── manifest.json        # Chrome Extension manifest
 │   └── icons/               # Extension icons
-└── CLAUDE.md                # Implementation plan
+└── dist/                    # Build output (load this in Chrome)
 ```
 
 ## Usage
