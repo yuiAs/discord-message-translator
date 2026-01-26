@@ -1,6 +1,6 @@
 import { getSettings } from '@/lib/utils/settings';
 import { translateMessage, translateMessageBatch } from '@/lib/utils/translator';
-import { isDiscordMessage, createDiscordMessage } from './message-utils';
+import { isDiscordMessage, createDiscordMessage, findTranslatableElements, extractMessageId, extractMessageText } from './message-utils';
 import { RequestQueue, debounce } from '@/lib/utils/async-control';
 
 // Configuration constants
@@ -56,7 +56,21 @@ export class MessageTranslationObserver {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
             const element = node as HTMLElement;
-            if (isDiscordMessage(element)) {
+
+            // Check if the added element is a message container
+            if (element.id?.startsWith('chat-messages-')) {
+              this.observeMessage(element);
+              return;
+            }
+
+            // Check if element contains message containers
+            const messageContainers = element.querySelectorAll('[id^="chat-messages-"]');
+            messageContainers.forEach((container) => {
+              this.observeMessage(container as HTMLElement);
+            });
+
+            // Fallback: check with isDiscordMessage for legacy compatibility
+            if (messageContainers.length === 0 && isDiscordMessage(element)) {
               this.observeMessage(element);
             }
           }
@@ -69,8 +83,28 @@ export class MessageTranslationObserver {
     console.log('[MessageObserver] Starting...');
 
     // Add existing messages to observation list
-    const existingMessages = document.querySelectorAll('[class*="message"]');
-    existingMessages.forEach((msg) => this.observeMessage(msg as HTMLElement));
+    // Use multiple selectors for better compatibility
+    const existingMessages = document.querySelectorAll(
+      '[id^="chat-messages-"], [id^="message-content-"]'
+    );
+    const uniqueMessages = new Set<HTMLElement>();
+
+    existingMessages.forEach((el) => {
+      // If it's a message-content element, find its parent message container
+      if (el.id?.startsWith('message-content-')) {
+        const messageContainer = el.closest('[id^="chat-messages-"]') as HTMLElement;
+        if (messageContainer) {
+          uniqueMessages.add(messageContainer);
+        } else {
+          // No container found, observe the element itself
+          uniqueMessages.add(el as HTMLElement);
+        }
+      } else {
+        uniqueMessages.add(el as HTMLElement);
+      }
+    });
+
+    uniqueMessages.forEach((msg) => this.observeMessage(msg));
 
     // Monitor new messages
     this.mutationObserver.observe(document.body, {
@@ -78,7 +112,7 @@ export class MessageTranslationObserver {
       subtree: true,
     });
 
-    console.log(`[MessageObserver] Observing ${existingMessages.length} existing messages`);
+    console.log(`[MessageObserver] Observing ${uniqueMessages.size} existing messages`);
   }
 
   private observeMessage(element: HTMLElement) {
@@ -217,18 +251,41 @@ export class MessageTranslationObserver {
     translation: string,
     mode: 'replace' | 'append'
   ) {
-    const contentElement = element.querySelector('[class*="messageContent"]');
-    if (!contentElement) return;
+    // Find message content element by ID first (more reliable)
+    let contentElement: Element | null = element.querySelector('[id^="message-content-"]');
+
+    // Fallback to class-based selector
+    if (!contentElement) {
+      contentElement = element.querySelector('[class*="messageContent"]');
+    }
+
+    // If element itself is a message-content element
+    if (!contentElement && element.id?.startsWith('message-content-')) {
+      contentElement = element;
+    }
+
+    if (!contentElement) {
+      console.warn('[MessageObserver] Could not find content element for translation injection');
+      return;
+    }
+
+    // Check if already translated (avoid duplicate injections)
+    if (contentElement.querySelector('.discord-translator-translation')) {
+      return;
+    }
 
     if (mode === 'replace') {
-      // Replace mode
+      // Replace mode - store original text as data attribute for potential restoration
+      if (!contentElement.hasAttribute('data-original-text')) {
+        contentElement.setAttribute('data-original-text', contentElement.textContent || '');
+      }
       contentElement.textContent = translation;
     } else {
-      // Append mode
+      // Append mode - add translation below original text
       const translationEl = document.createElement('div');
       translationEl.className = 'discord-translator-translation';
-      translationEl.style.cssText = 'margin-top: 4px; color: #888; font-size: 0.9em;';
-      translationEl.textContent = `→ ${translation}`;
+      translationEl.style.cssText = 'margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.1); color: #b9bbbe; font-size: 0.95em;';
+      translationEl.textContent = `${translation}`;
       contentElement.appendChild(translationEl);
     }
   }
