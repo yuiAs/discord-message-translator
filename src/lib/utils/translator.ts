@@ -4,6 +4,17 @@ import { getSettings } from './settings';
 import { GoogleTranslateClient } from '@/lib/api/google-translate';
 import { DeepLClient } from '@/lib/api/deepl';
 import { OpenAICompatibleClient } from '@/lib/api/openai-compatible';
+import { ChromeBuiltinTranslator } from '@/lib/api/chrome-builtin';
+
+// Singleton instance for Chrome Built-in Translator (to reuse translator cache)
+let chromeBuiltinInstance: ChromeBuiltinTranslator | null = null;
+
+function getChromeBuiltinTranslator(): ChromeBuiltinTranslator {
+  if (!chromeBuiltinInstance) {
+    chromeBuiltinInstance = new ChromeBuiltinTranslator();
+  }
+  return chromeBuiltinInstance;
+}
 
 export async function translateMessage(
   messageId: string,
@@ -53,6 +64,14 @@ export async function translateMessage(
         model: settings.openaiConfig.model,
       });
       translation = await openaiClient.translate(text, targetLang);
+      break;
+
+    case 'chrome-builtin':
+      if (!ChromeBuiltinTranslator.isAvailable()) {
+        throw new Error('Chrome Built-in Translator API is not available. Please use Chrome 138+ or select a different provider.');
+      }
+      const chromeBuiltinClient = getChromeBuiltinTranslator();
+      translation = await chromeBuiltinClient.translate(text, targetLang);
       break;
 
     default:
@@ -136,6 +155,14 @@ export async function translateMessageBatch(
           model: settings.openaiConfig.model,
         });
         translations = await openaiClient.translateBatch(uncachedTexts, targetLang);
+        break;
+
+      case 'chrome-builtin':
+        if (!ChromeBuiltinTranslator.isAvailable()) {
+          throw new Error('Chrome Built-in Translator API is not available. Please use Chrome 138+ or select a different provider.');
+        }
+        const chromeBuiltinClient = getChromeBuiltinTranslator();
+        translations = await chromeBuiltinClient.translateBatch(uncachedTexts, targetLang);
         break;
 
       default:
