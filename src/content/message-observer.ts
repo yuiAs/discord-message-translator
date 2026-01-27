@@ -329,6 +329,7 @@ export class MessageTranslationObserver {
 
   /**
    * Inject translation directly into a specific content element
+   * Handles complex message structures (headings, lists, mentions, etc.)
    */
   private injectTranslationToElement(
     contentElement: HTMLElement,
@@ -340,47 +341,41 @@ export class MessageTranslationObserver {
       return;
     }
 
-    // Find the first span containing the message text
-    const originalSpan = contentElement.querySelector('span');
-    const originalText = originalSpan?.textContent || contentElement.textContent || '';
+    // Check if parent has message-reply-context-* (reply preview context)
+    const isReplyContext = contentElement.closest('[id^="message-reply-context-"]') !== null;
+
+    // Create a wrapper for original content if it doesn't exist
+    let originalWrapper = contentElement.querySelector('.discord-translator-original') as HTMLElement;
+    if (!originalWrapper) {
+      // Wrap all existing children in a span for easier manipulation
+      originalWrapper = document.createElement('span');
+      originalWrapper.className = 'discord-translator-original';
+      // Move all children into the wrapper
+      while (contentElement.firstChild) {
+        originalWrapper.appendChild(contentElement.firstChild);
+      }
+      contentElement.appendChild(originalWrapper);
+    }
+
+    // Create translation element
+    const translationSpan = document.createElement('span');
+    translationSpan.className = 'discord-translator-translation';
+    translationSpan.style.cssText = 'color: #b9bbbe; font-size: 0.95em;';
+    translationSpan.textContent = translation;
 
     if (mode === 'replace') {
-      // Replace mode - store original text as data attribute for potential restoration
-      if (!contentElement.hasAttribute('data-original-text')) {
-        contentElement.setAttribute('data-original-text', originalText);
-      }
-      if (originalSpan) {
-        originalSpan.textContent = translation;
-      } else {
-        contentElement.textContent = translation;
-      }
+      // Replace mode - hide original content and show translation
+      originalWrapper.style.display = 'none';
+      contentElement.appendChild(translationSpan);
     } else {
-      // Both mode - show original and translation
-      // Check if parent has message-reply-context-* (reply preview context)
-      const isReplyContext = contentElement.closest('[id^="message-reply-context-"]') !== null;
-
-      const translationSpan = document.createElement('span');
-      translationSpan.className = 'discord-translator-translation';
-      translationSpan.style.cssText = 'color: #b9bbbe; font-size: 0.95em;';
-      translationSpan.textContent = translation;
-
+      // Append mode - show both original and translation
       if (isReplyContext) {
         // Reply context: inline without line break (space separated)
-        // <span>original</span> <span>translation</span>
-        if (originalSpan) {
-          originalSpan.after(document.createTextNode(' '), translationSpan);
-        } else {
-          contentElement.append(document.createTextNode(' '), translationSpan);
-        }
+        contentElement.append(document.createTextNode(' '), translationSpan);
       } else {
         // Normal message: add line break between original and translation
-        // <span>original</span><br /><span>translation</span>
         const br = document.createElement('br');
-        if (originalSpan) {
-          originalSpan.after(br, translationSpan);
-        } else {
-          contentElement.append(br, translationSpan);
-        }
+        contentElement.append(br, translationSpan);
       }
     }
   }

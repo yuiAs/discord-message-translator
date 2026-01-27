@@ -126,22 +126,36 @@ export function findMainMessageContent(container: HTMLElement): HTMLElement | nu
 }
 
 /**
+ * Extract visible text from element, excluding hidden elements like hiddenVisually
+ */
+function extractVisibleText(element: HTMLElement): string {
+  // Clone the element to avoid modifying the original
+  const clone = element.cloneNode(true) as HTMLElement;
+
+  // Remove hidden elements (used for screen readers, e.g., commas between list items)
+  const hiddenElements = clone.querySelectorAll('[class*="hiddenVisually"]');
+  hiddenElements.forEach((el) => el.remove());
+
+  return clone.textContent?.trim() || '';
+}
+
+/**
  * Extract message text from element
  */
 export function extractMessageText(element: HTMLElement): string {
   // If element itself is a message-content element
   if (element.id?.startsWith('message-content-')) {
-    return element.textContent?.trim() || '';
+    return extractVisibleText(element);
   }
 
   // Find the main message content (not reply preview)
   const mainContent = findMainMessageContent(element);
   if (mainContent) {
-    return mainContent.textContent?.trim() || '';
+    return extractVisibleText(mainContent);
   }
 
   // Last resort: entire element text
-  return element.textContent?.trim() || '';
+  return extractVisibleText(element);
 }
 
 /**
