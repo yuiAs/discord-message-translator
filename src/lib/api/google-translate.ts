@@ -7,19 +7,22 @@ export class GoogleTranslateClient {
   }
 
   async translate(text: string, targetLang: string, sourceLang?: string): Promise<string> {
-    const params = new URLSearchParams({
+    const body: Record<string, string | string[]> = {
       q: text,
       target: targetLang,
-      key: this.apiKey,
       format: 'text',
-    });
+    };
 
     if (sourceLang) {
-      params.append('source', sourceLang);
+      body.source = sourceLang;
     }
 
-    const response = await fetch(`${this.baseUrl}?${params.toString()}`, {
+    const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -40,23 +43,22 @@ export class GoogleTranslateClient {
       return [];
     }
 
-    const params = new URLSearchParams({
+    const body: Record<string, string | string[]> = {
+      q: texts,
       target: targetLang,
-      key: this.apiKey,
       format: 'text',
-    });
-
-    // Add multiple 'q' parameters for batch translation
-    texts.forEach((text) => {
-      params.append('q', text);
-    });
+    };
 
     if (sourceLang) {
-      params.append('source', sourceLang);
+      body.source = sourceLang;
     }
 
-    const response = await fetch(`${this.baseUrl}?${params.toString()}`, {
+    const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -65,6 +67,6 @@ export class GoogleTranslateClient {
     }
 
     const data = await response.json();
-    return data.data.translations.map((t: any) => t.translatedText);
+    return data.data.translations.map((t: { translatedText: string }) => t.translatedText);
   }
 }
