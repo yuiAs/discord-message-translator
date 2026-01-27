@@ -1,7 +1,17 @@
 import { getSettings } from '@/lib/utils/settings';
 import { translateMessage, translateMessageBatch } from '@/lib/utils/translator';
-import { isDiscordMessage, createDiscordMessage, findTranslatableElements, extractMessageId, extractMessageText, findMainMessageContent } from './message-utils';
+import { isDiscordMessage, createDiscordMessage, findTranslatableElements } from './message-utils';
 import { RequestQueue, debounce } from '@/lib/utils/async-control';
+
+/**
+ * Generate a unique key for tracking translated elements
+ * Uses element's position in DOM to distinguish reply context from main content
+ */
+function getElementKey(element: HTMLElement): string {
+  const messageId = element.id?.match(/^message-content-(\d+)$/)?.[1] || '';
+  const isReplyContext = element.closest('[id^="message-reply-context-"]') !== null;
+  return `${messageId}-${isReplyContext ? 'reply' : 'main'}`;
+}
 
 // Configuration constants
 const MAX_CONCURRENT_REQUESTS = 3; // Limit concurrent translation API requests
@@ -12,7 +22,8 @@ export class MessageTranslationObserver {
   private intersectionObserver: IntersectionObserver;
   private mutationObserver: MutationObserver;
   private observedMessages = new Set<string>(); // Message IDs already being observed
-  private translatedMessages = new Set<string>(); // Message IDs already translated
+  private translatedMessages = new Set<string>(); // Message IDs already translated (for main content)
+  private translatedElements = new Set<string>(); // Element keys already translated (includes reply contexts)
   private translationQueue: RequestQueue; // Request queue for rate limiting
   private pendingMessages: Map<string, HTMLElement> = new Map(); // Messages waiting to be processed
   private processPendingDebounced: () => void;
@@ -176,41 +187,88 @@ export class MessageTranslationObserver {
   /**
    * Handle batch translation for multiple visible messages
    * More efficient than translating individually
+   * Translates all translatable elements including reply contexts
    */
   private async handleVisibleMessagesBatch(
     messagePairs: Array<[string, HTMLElement]>,
     settings: Awaited<ReturnType<typeof getSettings>>
   ) {
-    const batchMessages = messagePairs
-      .map(([messageId, element]) => {
-        const message = createDiscordMessage(element);
-        if (!message || this.translatedMessages.has(message.id)) {
-          return null;
-        }
-        return { id: message.id, content: message.content, element };
-      })
-      .filter((m): m is NonNullable<typeof m> => m !== null);
+    // Collect all translatable elements from all message containers
+    const elementsToTranslate: Array<{
+      contentId: string;
+      content: string;
+      element: HTMLElement;
+      elementKey: string;
+      parentMessageId: string;
+    }> = [];
 
-    if (batchMessages.length === 0) {
+    for (const [messageId, container] of messagePairs) {
+      if (this.translatedMessages.has(messageId)) {
+        continue;
+      }
+
+      const translatableElements = findTranslatableElements(container);
+
+      for (const contentElement of translatableElements) {
+        const elementKey = getElementKey(contentElement);
+
+        if (this.translatedElements.has(elementKey)) {
+          continue;
+        }
+
+        const contentId = contentElement.id?.match(/^message-content-(\d+)$/)?.[1];
+        const text = contentElement.textContent?.trim() || '';
+
+        if (!contentId || !text) {
+          continue;
+        }
+
+        elementsToTranslate.push({
+          contentId,
+          content: text,
+          element: contentElement,
+          elementKey,
+          parentMessageId: messageId,
+        });
+      }
+    }
+
+    if (elementsToTranslate.length === 0) {
       return;
     }
 
     try {
-      const translations = await translateMessageBatch(
-        batchMessages.map(m => ({ id: m.id, content: m.content })),
-        settings.targetLanguage
-      );
-
-      // Inject all translations into DOM
-      for (const { id, element } of batchMessages) {
-        const translation = translations.get(id);
-        if (translation) {
-          this.injectTranslation(element, translation, settings.translationMode);
-          this.translatedMessages.add(id);
+      // Batch translate all unique content (keyed by contentId to avoid duplicates)
+      const uniqueContents = new Map<string, string>();
+      for (const item of elementsToTranslate) {
+        if (!uniqueContents.has(item.contentId)) {
+          uniqueContents.set(item.contentId, item.content);
         }
       }
 
-      console.log(`[MessageObserver] Batch translated ${batchMessages.length} messages`);
+      const translations = await translateMessageBatch(
+        Array.from(uniqueContents.entries()).map(([id, content]) => ({ id, content })),
+        settings.targetLanguage
+      );
+
+      // Inject translations into all elements
+      const translatedParentIds = new Set<string>();
+
+      for (const { contentId, element, elementKey, parentMessageId } of elementsToTranslate) {
+        const translation = translations.get(contentId);
+        if (translation) {
+          this.injectTranslationToElement(element, translation, settings.translationMode);
+          this.translatedElements.add(elementKey);
+          translatedParentIds.add(parentMessageId);
+        }
+      }
+
+      // Mark parent messages as translated
+      for (const parentId of translatedParentIds) {
+        this.translatedMessages.add(parentId);
+      }
+
+      console.log(`[MessageObserver] Batch translated ${elementsToTranslate.length} elements from ${translatedParentIds.size} messages`);
     } catch (error) {
       console.error('[MessageObserver] Batch translation failed:', error);
       throw error;
@@ -219,46 +277,64 @@ export class MessageTranslationObserver {
 
   /**
    * Handle translation for a single visible message
+   * Translates all translatable elements including reply context
    */
   private async handleVisibleMessage(
     element: HTMLElement,
     messageId: string,
     settings: Awaited<ReturnType<typeof getSettings>>
   ) {
-    const message = createDiscordMessage(element);
-    if (!message || this.translatedMessages.has(message.id)) {
-      return; // Already translated
-    }
+    // Find all translatable elements (main content + reply context)
+    const translatableElements = findTranslatableElements(element);
 
-    try {
-      const translation = await translateMessage(
-        message.id,
-        message.content,
-        settings.targetLanguage
-      );
-
-      // Inject translation into DOM
-      this.injectTranslation(element, translation, settings.translationMode);
-      this.translatedMessages.add(message.id);
-    } catch (error) {
-      console.error(`[MessageObserver] Translation failed for message ${message.id}:`, error);
-      throw error; // Re-throw to be caught by queue handler
-    }
-  }
-
-  private injectTranslation(
-    element: HTMLElement,
-    translation: string,
-    mode: 'replace' | 'append'
-  ) {
-    // Find the main message content element (NOT reply preview)
-    const contentElement = findMainMessageContent(element);
-
-    if (!contentElement) {
-      console.warn('[MessageObserver] Could not find content element for translation injection');
+    if (translatableElements.length === 0) {
       return;
     }
 
+    // Process each translatable element
+    for (const contentElement of translatableElements) {
+      const elementKey = getElementKey(contentElement);
+
+      // Skip if this specific element is already translated
+      if (this.translatedElements.has(elementKey)) {
+        continue;
+      }
+
+      const contentId = contentElement.id?.match(/^message-content-(\d+)$/)?.[1];
+      const text = contentElement.textContent?.trim() || '';
+
+      if (!contentId || !text) {
+        continue;
+      }
+
+      try {
+        const translation = await translateMessage(
+          contentId,
+          text,
+          settings.targetLanguage
+        );
+
+        // Inject translation into this specific element
+        this.injectTranslationToElement(contentElement, translation, settings.translationMode);
+        this.translatedElements.add(elementKey);
+      } catch (error) {
+        console.error(`[MessageObserver] Translation failed for element ${elementKey}:`, error);
+        throw error;
+      }
+    }
+
+    // Mark main message as translated
+    this.translatedMessages.add(messageId);
+  }
+
+  /**
+   * Inject translation directly into a specific content element
+   */
+  private injectTranslationToElement(
+    contentElement: HTMLElement,
+    translation: string,
+    mode: 'replace' | 'append'
+  ) {
     // Check if already translated (avoid duplicate injections)
     if (contentElement.querySelector('.discord-translator-translation')) {
       return;
@@ -315,6 +391,7 @@ export class MessageTranslationObserver {
     this.mutationObserver.disconnect();
     this.observedMessages.clear();
     this.translatedMessages.clear();
+    this.translatedElements.clear();
     this.pendingMessages.clear();
     this.translationQueue.clear();
   }
