@@ -1,6 +1,6 @@
 import { getSettings } from '@/lib/utils/settings';
 import { translateMessage, translateMessageBatch } from '@/lib/utils/translator';
-import { isDiscordMessage, createDiscordMessage, findTranslatableElements, extractMessageId, extractMessageText } from './message-utils';
+import { isDiscordMessage, createDiscordMessage, findTranslatableElements, extractMessageId, extractMessageText, findMainMessageContent } from './message-utils';
 import { RequestQueue, debounce } from '@/lib/utils/async-control';
 
 // Configuration constants
@@ -251,18 +251,8 @@ export class MessageTranslationObserver {
     translation: string,
     mode: 'replace' | 'append'
   ) {
-    // Find message content element by ID first (more reliable)
-    let contentElement: Element | null = element.querySelector('[id^="message-content-"]');
-
-    // Fallback to class-based selector
-    if (!contentElement) {
-      contentElement = element.querySelector('[class*="messageContent"]');
-    }
-
-    // If element itself is a message-content element
-    if (!contentElement && element.id?.startsWith('message-content-')) {
-      contentElement = element;
-    }
+    // Find the main message content element (NOT reply preview)
+    const contentElement = findMainMessageContent(element);
 
     if (!contentElement) {
       console.warn('[MessageObserver] Could not find content element for translation injection');
@@ -274,19 +264,48 @@ export class MessageTranslationObserver {
       return;
     }
 
+    // Find the first span containing the message text
+    const originalSpan = contentElement.querySelector('span');
+    const originalText = originalSpan?.textContent || contentElement.textContent || '';
+
     if (mode === 'replace') {
       // Replace mode - store original text as data attribute for potential restoration
       if (!contentElement.hasAttribute('data-original-text')) {
-        contentElement.setAttribute('data-original-text', contentElement.textContent || '');
+        contentElement.setAttribute('data-original-text', originalText);
       }
-      contentElement.textContent = translation;
+      if (originalSpan) {
+        originalSpan.textContent = translation;
+      } else {
+        contentElement.textContent = translation;
+      }
     } else {
-      // Append mode - add translation below original text
-      const translationEl = document.createElement('div');
-      translationEl.className = 'discord-translator-translation';
-      translationEl.style.cssText = 'margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.1); color: #b9bbbe; font-size: 0.95em;';
-      translationEl.textContent = `${translation}`;
-      contentElement.appendChild(translationEl);
+      // Both mode - show original and translation
+      // Check if parent has message-reply-context-* (reply preview context)
+      const isReplyContext = contentElement.closest('[id^="message-reply-context-"]') !== null;
+
+      const translationSpan = document.createElement('span');
+      translationSpan.className = 'discord-translator-translation';
+      translationSpan.style.cssText = 'color: #b9bbbe; font-size: 0.95em;';
+      translationSpan.textContent = translation;
+
+      if (isReplyContext) {
+        // Reply context: inline without line break (space separated)
+        // <span>original</span> <span>translation</span>
+        if (originalSpan) {
+          originalSpan.after(document.createTextNode(' '), translationSpan);
+        } else {
+          contentElement.append(document.createTextNode(' '), translationSpan);
+        }
+      } else {
+        // Normal message: add line break between original and translation
+        // <span>original</span><br /><span>translation</span>
+        const br = document.createElement('br');
+        if (originalSpan) {
+          originalSpan.after(br, translationSpan);
+        } else {
+          contentElement.append(br, translationSpan);
+        }
+      }
     }
   }
 

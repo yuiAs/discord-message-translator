@@ -56,28 +56,28 @@ export function findTranslatableElements(messageElement: HTMLElement): HTMLEleme
  * e.g., "message-content-1465389247128404098" -> "1465389247128404098"
  */
 export function extractMessageId(element: HTMLElement): string | null {
-  // 1. Try to extract from message-content-* or message-reply-context-* id
-  if (element.id) {
-    const match = element.id.match(/^message-(?:content|reply-context)-(\d+)$/);
-    if (match) {
-      return match[1]; // Return the Snowflake ID
-    }
-  }
-
-  // 2. Try to find content element within and extract from it
-  const contentElement = element.querySelector('[id^="message-content-"]');
-  if (contentElement?.id) {
-    const match = contentElement.id.match(/^message-content-(\d+)$/);
+  // 1. Try to extract from message-content-* id (if element itself is a content element)
+  if (element.id?.startsWith('message-content-')) {
+    const match = element.id.match(/^message-content-(\d+)$/);
     if (match) {
       return match[1];
     }
   }
 
-  // 3. Try chat-messages list item id (e.g., "chat-messages-{channelId}-{messageId}")
+  // 2. Try chat-messages list item id (e.g., "chat-messages-{channelId}-{messageId}")
   if (element.id?.startsWith('chat-messages-')) {
     const parts = element.id.split('-');
     if (parts.length >= 4) {
       return parts[parts.length - 1]; // Last part is message ID
+    }
+  }
+
+  // 3. Find the main message content (NOT reply preview) and extract from it
+  const mainContent = findMainMessageContent(element);
+  if (mainContent?.id) {
+    const match = mainContent.id.match(/^message-content-(\d+)$/);
+    if (match) {
+      return match[1];
     }
   }
 
@@ -95,6 +95,37 @@ export function extractMessageId(element: HTMLElement): string | null {
 }
 
 /**
+ * Find the main message content element (NOT inside reply context)
+ */
+export function findMainMessageContent(container: HTMLElement): HTMLElement | null {
+  // If element itself is a message-content element, check if it's inside reply context
+  if (container.id?.startsWith('message-content-')) {
+    if (!container.closest('[id^="message-reply-context-"]')) {
+      return container;
+    }
+    return null;
+  }
+
+  // Find all message-content elements and return the one NOT inside reply context
+  const allContentElements = container.querySelectorAll('[id^="message-content-"]');
+  for (const el of allContentElements) {
+    if (!el.closest('[id^="message-reply-context-"]')) {
+      return el as HTMLElement;
+    }
+  }
+
+  // Fallback: class-based selector (also exclude reply context)
+  const allByClass = container.querySelectorAll('[class*="messageContent"]');
+  for (const el of allByClass) {
+    if (!el.closest('[id^="message-reply-context-"]')) {
+      return el as HTMLElement;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Extract message text from element
  */
 export function extractMessageText(element: HTMLElement): string {
@@ -103,16 +134,10 @@ export function extractMessageText(element: HTMLElement): string {
     return element.textContent?.trim() || '';
   }
 
-  // Find message content element by id (preferred)
-  const contentById = element.querySelector('[id^="message-content-"]');
-  if (contentById) {
-    return contentById.textContent?.trim() || '';
-  }
-
-  // Fallback: class-based selector
-  const contentByClass = element.querySelector('[class*="messageContent"]');
-  if (contentByClass) {
-    return contentByClass.textContent?.trim() || '';
+  // Find the main message content (not reply preview)
+  const mainContent = findMainMessageContent(element);
+  if (mainContent) {
+    return mainContent.textContent?.trim() || '';
   }
 
   // Last resort: entire element text
