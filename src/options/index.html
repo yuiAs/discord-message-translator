@@ -121,10 +121,14 @@
                   <span class="label-text font-medium">Select Provider</span>
                 </label>
                 <select id="translationProvider" class="select select-bordered w-full">
+                  <option value="chrome-builtin" disabled>Chrome Built-in (Checking...)</option>
                   <option value="google">Google Translate</option>
                   <option value="deepl">DeepL</option>
                   <option value="openai">OpenAI Compatible</option>
                 </select>
+                <label class="label" id="chromeBuiltinHint" style="display: none;">
+                  <span class="label-text-alt text-warning">Chrome Built-in requires Chrome 138+ with Translator API enabled</span>
+                </label>
               </div>
             </div>
           </div>

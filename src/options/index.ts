@@ -1,5 +1,6 @@
 import { getSettings, updateSettings } from '@/lib/utils/settings';
 import { createStorage } from '@/lib/cache/factory';
+import { ChromeBuiltinTranslator } from '@/lib/api/chrome-builtin';
 import './styles.css';
 
 // DOM elements
@@ -31,8 +32,10 @@ const toastText = document.getElementById('toastText') as HTMLSpanElement;
 const autoSaveStatus = document.getElementById('autoSaveStatus') as HTMLDivElement;
 const savingSpinner = document.getElementById('savingSpinner') as HTMLSpanElement;
 const saveStatusText = document.getElementById('saveStatusText') as HTMLSpanElement;
+const chromeBuiltinHint = document.getElementById('chromeBuiltinHint') as HTMLLabelElement;
 
 let autoSaveTimeout: number | null = null;
+let chromeBuiltinAvailable = false;
 
 // Tab switching
 tabs.forEach((tab) => {
@@ -117,11 +120,40 @@ async function autoSave(updates: any) {
   }, 500); // 500ms debounce
 }
 
+// Check Chrome Built-in Translator API availability
+async function checkChromeBuiltinAvailability(): Promise<void> {
+  const chromeBuiltinOption = translationProviderSelect.querySelector(
+    'option[value="chrome-builtin"]'
+  ) as HTMLOptionElement;
+
+  if (ChromeBuiltinTranslator.isAvailable()) {
+    chromeBuiltinAvailable = true;
+    chromeBuiltinOption.disabled = false;
+    chromeBuiltinOption.textContent = 'Chrome Built-in (Free, No API Key)';
+    chromeBuiltinHint.style.display = 'none';
+  } else {
+    chromeBuiltinAvailable = false;
+    chromeBuiltinOption.disabled = true;
+    chromeBuiltinOption.textContent = 'Chrome Built-in (Not Available)';
+    chromeBuiltinHint.style.display = 'block';
+  }
+}
+
 // Load settings and reflect in UI
 async function loadSettings() {
   const settings = await getSettings();
 
-  translationProviderSelect.value = settings.translationProvider;
+  // Check Chrome Built-in availability first
+  await checkChromeBuiltinAvailability();
+
+  // If saved provider is chrome-builtin but it's not available, fall back to google
+  if (settings.translationProvider === 'chrome-builtin' && !chromeBuiltinAvailable) {
+    translationProviderSelect.value = 'google';
+    autoSave({ translationProvider: 'google' });
+  } else {
+    translationProviderSelect.value = settings.translationProvider;
+  }
+
   translationModeSelect.value = settings.translationMode;
   autoTranslateToggle.checked = settings.autoTranslate;
   targetLanguageSelect.value = settings.targetLanguage;
@@ -183,7 +215,7 @@ async function loadCacheStats() {
 // Translation Provider change
 translationProviderSelect.addEventListener('change', () => {
   autoSave({
-    translationProvider: translationProviderSelect.value as 'google' | 'deepl' | 'openai',
+    translationProvider: translationProviderSelect.value as 'google' | 'deepl' | 'openai' | 'chrome-builtin',
   });
 });
 

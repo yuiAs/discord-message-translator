@@ -1,6 +1,6 @@
 export interface Settings {
   // Translation API settings
-  translationProvider: 'google' | 'deepl' | 'openai';
+  translationProvider: 'google' | 'deepl' | 'openai' | 'chrome-builtin';
   apiKeys: {
     google?: string;
     deepl?: string;
