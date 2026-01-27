@@ -1,6 +1,6 @@
 import { getSettings } from '@/lib/utils/settings';
 import { translateMessage, translateMessageBatch } from '@/lib/utils/translator';
-import { isDiscordMessage, createDiscordMessage, findTranslatableElements, extractMessageId, extractMessageText } from './message-utils';
+import { isDiscordMessage, createDiscordMessage, findTranslatableElements, extractMessageId, extractMessageText, findMainMessageContent } from './message-utils';
 import { RequestQueue, debounce } from '@/lib/utils/async-control';
 
 // Configuration constants
@@ -251,18 +251,8 @@ export class MessageTranslationObserver {
     translation: string,
     mode: 'replace' | 'append'
   ) {
-    // Find message content element by ID first (more reliable)
-    let contentElement: HTMLElement | null = element.querySelector('[id^="message-content-"]');
-
-    // Fallback to class-based selector
-    if (!contentElement) {
-      contentElement = element.querySelector('[class*="messageContent"]');
-    }
-
-    // If element itself is a message-content element
-    if (!contentElement && element.id?.startsWith('message-content-')) {
-      contentElement = element;
-    }
+    // Find the main message content element (NOT reply preview)
+    const contentElement = findMainMessageContent(element);
 
     if (!contentElement) {
       console.warn('[MessageObserver] Could not find content element for translation injection');
