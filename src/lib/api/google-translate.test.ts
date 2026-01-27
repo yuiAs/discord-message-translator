@@ -61,7 +61,8 @@ describe('GoogleTranslateClient', () => {
       await client.translate('Hello', 'ja', 'en');
 
       const callArgs = vi.mocked(fetch).mock.calls[0];
-      expect(callArgs[0]).toContain('source=en');
+      const body = JSON.parse(callArgs[1]?.body as string);
+      expect(body.source).toBe('en');
     });
 
     it('should throw error on API failure', async () => {
@@ -132,7 +133,7 @@ describe('GoogleTranslateClient', () => {
       expect(fetch).not.toHaveBeenCalled();
     });
 
-    it('should include all texts as q parameters', async () => {
+    it('should include all texts in request body', async () => {
       const mockResponse = {
         data: {
           translations: [
@@ -150,9 +151,8 @@ describe('GoogleTranslateClient', () => {
       await client.translateBatch(['Hello', 'Goodbye'], 'es');
 
       const callArgs = vi.mocked(fetch).mock.calls[0];
-      const url = callArgs[0] as string;
-      expect(url).toContain('q=Hello');
-      expect(url).toContain('q=Goodbye');
+      const body = JSON.parse(callArgs[1]?.body as string);
+      expect(body.q).toEqual(['Hello', 'Goodbye']);
     });
   });
 });
