@@ -1,6 +1,6 @@
 import { getSettings } from '@/lib/utils/settings';
 import { translateMessage, translateMessageBatch } from '@/lib/utils/translator';
-import { isDiscordMessage, createDiscordMessage, findTranslatableElements } from './message-utils';
+import { isDiscordMessage, createDiscordMessage, findTranslatableElements, findAllTranslatableElements, TranslatableElement } from './message-utils';
 import { RequestQueue, debounce } from '@/lib/utils/async-control';
 
 /**
@@ -11,6 +11,18 @@ function getElementKey(element: HTMLElement): string {
   const messageId = element.id?.match(/^message-content-(\d+)$/)?.[1] || '';
   const isReplyContext = element.closest('[id^="message-reply-context-"]') !== null;
   return `${messageId}-${isReplyContext ? 'reply' : 'main'}`;
+}
+
+/**
+ * Generate a unique key for TranslatableElement
+ */
+function getTranslatableElementKey(item: TranslatableElement): string {
+  if (item.type === 'message-content') {
+    const isReplyContext = item.element.closest('[id^="message-reply-context-"]') !== null;
+    return `${item.id}-${isReplyContext ? 'reply' : 'main'}`;
+  }
+  // For embed sections, use the unique ID directly
+  return `embed-${item.id}`;
 }
 
 // Configuration constants
@@ -187,7 +199,7 @@ export class MessageTranslationObserver {
   /**
    * Handle batch translation for multiple visible messages
    * More efficient than translating individually
-   * Translates all translatable elements including reply contexts
+   * Translates all translatable elements including reply contexts and embeds
    */
   private async handleVisibleMessagesBatch(
     messagePairs: Array<[string, HTMLElement]>,
@@ -200,6 +212,7 @@ export class MessageTranslationObserver {
       element: HTMLElement;
       elementKey: string;
       parentMessageId: string;
+      type: 'message-content' | 'embed-section';
     }> = [];
 
     for (const [messageId, container] of messagePairs) {
@@ -207,28 +220,29 @@ export class MessageTranslationObserver {
         continue;
       }
 
-      const translatableElements = findTranslatableElements(container);
+      // Use findAllTranslatableElements to include embeds
+      const translatableElements = findAllTranslatableElements(container);
 
-      for (const contentElement of translatableElements) {
-        const elementKey = getElementKey(contentElement);
+      for (const item of translatableElements) {
+        const elementKey = getTranslatableElementKey(item);
 
         if (this.translatedElements.has(elementKey)) {
           continue;
         }
 
-        const contentId = contentElement.id?.match(/^message-content-(\d+)$/)?.[1];
-        const text = contentElement.textContent?.trim() || '';
+        const text = item.element.textContent?.trim() || '';
 
-        if (!contentId || !text) {
+        if (!text) {
           continue;
         }
 
         elementsToTranslate.push({
-          contentId,
+          contentId: item.id,
           content: text,
-          element: contentElement,
+          element: item.element,
           elementKey,
           parentMessageId: messageId,
+          type: item.type,
         });
       }
     }
@@ -254,10 +268,14 @@ export class MessageTranslationObserver {
       // Inject translations into all elements
       const translatedParentIds = new Set<string>();
 
-      for (const { contentId, element, elementKey, parentMessageId } of elementsToTranslate) {
+      for (const { contentId, element, elementKey, parentMessageId, type } of elementsToTranslate) {
         const translation = translations.get(contentId);
         if (translation) {
-          this.injectTranslationToElement(element, translation, settings.translationMode);
+          if (type === 'embed-section') {
+            this.injectTranslationToEmbedSection(element, translation, settings.translationMode);
+          } else {
+            this.injectTranslationToElement(element, translation, settings.translationMode);
+          }
           this.translatedElements.add(elementKey);
           translatedParentIds.add(parentMessageId);
         }
@@ -277,45 +295,48 @@ export class MessageTranslationObserver {
 
   /**
    * Handle translation for a single visible message
-   * Translates all translatable elements including reply context
+   * Translates all translatable elements including reply context and embeds
    */
   private async handleVisibleMessage(
     element: HTMLElement,
     messageId: string,
     settings: Awaited<ReturnType<typeof getSettings>>
   ) {
-    // Find all translatable elements (main content + reply context)
-    const translatableElements = findTranslatableElements(element);
+    // Find all translatable elements (main content + reply context + embeds)
+    const translatableElements = findAllTranslatableElements(element);
 
     if (translatableElements.length === 0) {
       return;
     }
 
     // Process each translatable element
-    for (const contentElement of translatableElements) {
-      const elementKey = getElementKey(contentElement);
+    for (const item of translatableElements) {
+      const elementKey = getTranslatableElementKey(item);
 
       // Skip if this specific element is already translated
       if (this.translatedElements.has(elementKey)) {
         continue;
       }
 
-      const contentId = contentElement.id?.match(/^message-content-(\d+)$/)?.[1];
-      const text = contentElement.textContent?.trim() || '';
+      const text = item.element.textContent?.trim() || '';
 
-      if (!contentId || !text) {
+      if (!text) {
         continue;
       }
 
       try {
         const translation = await translateMessage(
-          contentId,
+          item.id,
           text,
           settings.targetLanguage
         );
 
         // Inject translation into this specific element
-        this.injectTranslationToElement(contentElement, translation, settings.translationMode);
+        if (item.type === 'embed-section') {
+          this.injectTranslationToEmbedSection(item.element, translation, settings.translationMode);
+        } else {
+          this.injectTranslationToElement(item.element, translation, settings.translationMode);
+        }
         this.translatedElements.add(elementKey);
       } catch (error) {
         console.error(`[MessageObserver] Translation failed for element ${elementKey}:`, error);
@@ -377,6 +398,49 @@ export class MessageTranslationObserver {
         const br = document.createElement('br');
         contentElement.append(br, translationSpan);
       }
+    }
+  }
+
+  /**
+   * Inject translation into an embed section element
+   * Preserves paragraph structure by using separate div for translation
+   */
+  private injectTranslationToEmbedSection(
+    sectionElement: HTMLElement,
+    translation: string,
+    mode: 'replace' | 'append'
+  ) {
+    // Check if already translated (avoid duplicate injections)
+    if (sectionElement.querySelector('.discord-translator-translation')) {
+      return;
+    }
+
+    // Create a wrapper for original content if it doesn't exist
+    let originalWrapper = sectionElement.querySelector('.discord-translator-original') as HTMLElement;
+    if (!originalWrapper) {
+      originalWrapper = document.createElement('div');
+      originalWrapper.className = 'discord-translator-original';
+      // Move all children into the wrapper
+      while (sectionElement.firstChild) {
+        originalWrapper.appendChild(sectionElement.firstChild);
+      }
+      sectionElement.appendChild(originalWrapper);
+    }
+
+    // Create translation element (use div to preserve block structure)
+    const translationDiv = document.createElement('div');
+    translationDiv.className = 'discord-translator-translation';
+    translationDiv.style.cssText = 'color: #b9bbbe; font-size: 0.95em; margin-top: 4px;';
+    translationDiv.textContent = translation;
+
+    if (mode === 'replace') {
+      // Replace mode - hide original content and show translation
+      originalWrapper.style.display = 'none';
+      translationDiv.style.marginTop = '0';
+      sectionElement.appendChild(translationDiv);
+    } else {
+      // Append mode - show both original and translation
+      sectionElement.appendChild(translationDiv);
     }
   }
 
