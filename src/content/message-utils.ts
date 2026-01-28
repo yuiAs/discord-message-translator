@@ -4,7 +4,16 @@ import { DiscordMessage } from '@/types/message';
 const MESSAGE_CONTENT_SELECTORS = [
   '[id^="message-content-"]',           // Primary: message-content-{snowflake}
   '[id^="message-reply-context-"]',     // Reply context preview
+  '[id^="message-accessories-"]',       // Bot embeds and attachments
   '[class*="messageContent"]',          // Fallback: class-based selector
+];
+
+// Embed content selectors (translatable sections within embeds)
+const EMBED_CONTENT_SELECTORS = [
+  '[class*="embedTitle"]',
+  '[class*="embedDescription"]',
+  '[class*="embedFieldName"]',
+  '[class*="embedFieldValue"]',
 ];
 
 /**
@@ -49,6 +58,67 @@ export function findTranslatableElements(messageElement: HTMLElement): HTMLEleme
   });
 
   return elements;
+}
+
+/**
+ * Represents a translatable element with metadata
+ */
+export interface TranslatableElement {
+  element: HTMLElement;
+  id: string;
+  type: 'message-content' | 'embed-section';
+}
+
+/**
+ * Find all translatable elements including embed sections
+ * Returns both message-content elements and embed sections with unique IDs
+ */
+export function findAllTranslatableElements(messageElement: HTMLElement): TranslatableElement[] {
+  const results: TranslatableElement[] = [];
+
+  // Find message content elements (not inside reply context at top level)
+  const contentElements = messageElement.querySelectorAll('[id^="message-content-"]');
+  contentElements.forEach((el) => {
+    const id = el.id.match(/^message-content-(\d+)$/)?.[1];
+    if (id) {
+      results.push({
+        element: el as HTMLElement,
+        id,
+        type: 'message-content',
+      });
+    }
+  });
+
+  // Find embed sections within message-accessories
+  const accessoriesElements = messageElement.querySelectorAll('[id^="message-accessories-"]');
+  accessoriesElements.forEach((accessories) => {
+    const accessoriesId = accessories.id.match(/^message-accessories-(\d+)$/)?.[1];
+    if (!accessoriesId) return;
+
+    // Find all embeds within accessories
+    const embeds = accessories.querySelectorAll('[class*="embed__"]');
+    embeds.forEach((embed, embedIndex) => {
+      // Find translatable sections within embed
+      EMBED_CONTENT_SELECTORS.forEach((selector) => {
+        const sections = embed.querySelectorAll(selector);
+        sections.forEach((section, sectionIndex) => {
+          const text = extractVisibleText(section as HTMLElement);
+          if (text) {
+            // Generate unique ID: accessoriesId-embedIndex-sectionType-sectionIndex
+            const sectionType = selector.match(/embed(\w+)/)?.[1]?.toLowerCase() || 'section';
+            const uniqueId = `${accessoriesId}-embed${embedIndex}-${sectionType}${sectionIndex}`;
+            results.push({
+              element: section as HTMLElement,
+              id: uniqueId,
+              type: 'embed-section',
+            });
+          }
+        });
+      });
+    });
+  });
+
+  return results;
 }
 
 /**
