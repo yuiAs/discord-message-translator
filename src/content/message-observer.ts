@@ -2,6 +2,7 @@ import { getSettings } from '@/lib/utils/settings';
 import { translateMessage, translateMessageBatch } from '@/lib/utils/translator';
 import { isDiscordMessage, createDiscordMessage, findTranslatableElements, findAllTranslatableElements, TranslatableElement } from './message-utils';
 import { RequestQueue, debounce } from '@/lib/utils/async-control';
+import { ChromeLanguageDetector } from '@/lib/api/chrome-language-detector';
 
 /**
  * Generate a unique key for tracking translated elements
@@ -30,6 +31,10 @@ const MAX_CONCURRENT_REQUESTS = 3; // Limit concurrent translation API requests
 const DEBOUNCE_DELAY = 100; // Debounce delay in milliseconds for batch processing
 const BATCH_SIZE = 10; // Number of messages to translate in a single batch
 
+// Language detection constants
+const TARGET_LANGUAGE_SKIP_THRESHOLD = 3; // After N consecutive target language detections, skip further checks
+const LANGUAGE_DETECTION_MIN_CONFIDENCE = 0.7; // Minimum confidence for language detection
+
 export class MessageTranslationObserver {
   private intersectionObserver: IntersectionObserver;
   private mutationObserver: MutationObserver;
@@ -39,6 +44,11 @@ export class MessageTranslationObserver {
   private translationQueue: RequestQueue; // Request queue for rate limiting
   private pendingMessages: Map<string, HTMLElement> = new Map(); // Messages waiting to be processed
   private processPendingDebounced: () => void;
+
+  // Language detection state (not persisted - resets on page reload)
+  private languageDetector: ChromeLanguageDetector | null = null;
+  private targetLanguageCount = 0; // Consecutive target language detections
+  private skipLanguageDetection = false; // Flag to skip detection after threshold reached
 
   constructor() {
     // Initialize request queue with concurrency limit
@@ -147,6 +157,77 @@ export class MessageTranslationObserver {
   }
 
   /**
+   * Initialize language detector if needed and available
+   */
+  private async initLanguageDetector(): Promise<boolean> {
+    if (this.languageDetector) {
+      return true;
+    }
+
+    if (!ChromeLanguageDetector.isAvailable()) {
+      return false;
+    }
+
+    try {
+      const status = await ChromeLanguageDetector.checkAvailability();
+      if (status === 'unavailable') {
+        return false;
+      }
+
+      this.languageDetector = new ChromeLanguageDetector();
+      return true;
+    } catch (error) {
+      console.error('[MessageObserver] Failed to initialize language detector:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if text is in the target language
+   * Updates internal counters for skip optimization
+   * @returns true if text should be skipped (is in target language)
+   */
+  private async shouldSkipAsTargetLanguage(
+    text: string,
+    targetLanguage: string
+  ): Promise<boolean> {
+    // Skip if we've already detected target language enough times
+    if (this.skipLanguageDetection) {
+      return true;
+    }
+
+    if (!this.languageDetector) {
+      return false;
+    }
+
+    try {
+      const isTarget = await this.languageDetector.isLanguage(
+        text,
+        targetLanguage,
+        LANGUAGE_DETECTION_MIN_CONFIDENCE
+      );
+
+      if (isTarget) {
+        this.targetLanguageCount++;
+        console.log(`[MessageObserver] Target language detected (${this.targetLanguageCount}/${TARGET_LANGUAGE_SKIP_THRESHOLD})`);
+
+        if (this.targetLanguageCount >= TARGET_LANGUAGE_SKIP_THRESHOLD) {
+          this.skipLanguageDetection = true;
+          console.log('[MessageObserver] Threshold reached, skipping future language detection');
+        }
+        return true;
+      } else {
+        // Reset counter if non-target language is detected
+        this.targetLanguageCount = 0;
+        return false;
+      }
+    } catch (error) {
+      console.error('[MessageObserver] Language detection failed:', error);
+      return false;
+    }
+  }
+
+  /**
    * Process pending messages in batch with rate limiting
    * Uses batch translation API when multiple messages are pending
    */
@@ -159,6 +240,11 @@ export class MessageTranslationObserver {
     if (!settings.autoTranslate) {
       this.pendingMessages.clear();
       return;
+    }
+
+    // Initialize language detector if skipTargetLanguage is enabled
+    if (settings.skipTargetLanguage) {
+      await this.initLanguageDetector();
     }
 
     // Get all pending messages
@@ -205,6 +291,15 @@ export class MessageTranslationObserver {
     messagePairs: Array<[string, HTMLElement]>,
     settings: Awaited<ReturnType<typeof getSettings>>
   ) {
+    // Check if we should skip all translations due to language detection
+    if (settings.skipTargetLanguage && this.skipLanguageDetection) {
+      console.log('[MessageObserver] Skipping batch - all messages assumed to be in target language');
+      for (const [messageId] of messagePairs) {
+        this.translatedMessages.add(messageId);
+      }
+      return;
+    }
+
     // Collect all translatable elements from all message containers
     const elementsToTranslate: Array<{
       contentId: string;
@@ -236,6 +331,16 @@ export class MessageTranslationObserver {
           continue;
         }
 
+        // Language detection: check if text is in target language
+        if (settings.skipTargetLanguage && this.languageDetector) {
+          const shouldSkip = await this.shouldSkipAsTargetLanguage(text, settings.targetLanguage);
+          if (shouldSkip) {
+            // Mark as translated (skipped) to avoid reprocessing
+            this.translatedElements.add(elementKey);
+            continue;
+          }
+        }
+
         elementsToTranslate.push({
           contentId: item.id,
           content: text,
@@ -248,6 +353,10 @@ export class MessageTranslationObserver {
     }
 
     if (elementsToTranslate.length === 0) {
+      // Mark parent messages as processed even if all elements were skipped
+      for (const [messageId] of messagePairs) {
+        this.translatedMessages.add(messageId);
+      }
       return;
     }
 
@@ -302,6 +411,13 @@ export class MessageTranslationObserver {
     messageId: string,
     settings: Awaited<ReturnType<typeof getSettings>>
   ) {
+    // Check if we should skip all translations due to language detection
+    if (settings.skipTargetLanguage && this.skipLanguageDetection) {
+      console.log(`[MessageObserver] Skipping message ${messageId} - assumed to be in target language`);
+      this.translatedMessages.add(messageId);
+      return;
+    }
+
     // Find all translatable elements (main content + reply context + embeds)
     const translatableElements = findAllTranslatableElements(element);
 
@@ -310,6 +426,8 @@ export class MessageTranslationObserver {
     }
 
     // Process each translatable element
+    let translatedAny = false;
+
     for (const item of translatableElements) {
       const elementKey = getTranslatableElementKey(item);
 
@@ -322,6 +440,16 @@ export class MessageTranslationObserver {
 
       if (!text) {
         continue;
+      }
+
+      // Language detection: check if text is in target language
+      if (settings.skipTargetLanguage && this.languageDetector) {
+        const shouldSkip = await this.shouldSkipAsTargetLanguage(text, settings.targetLanguage);
+        if (shouldSkip) {
+          // Mark as translated (skipped) to avoid reprocessing
+          this.translatedElements.add(elementKey);
+          continue;
+        }
       }
 
       try {
@@ -338,6 +466,7 @@ export class MessageTranslationObserver {
           this.injectTranslationToElement(item.element, translation, settings.translationMode);
         }
         this.translatedElements.add(elementKey);
+        translatedAny = true;
       } catch (error) {
         console.error(`[MessageObserver] Translation failed for element ${elementKey}:`, error);
         throw error;
@@ -453,5 +582,10 @@ export class MessageTranslationObserver {
     this.translatedElements.clear();
     this.pendingMessages.clear();
     this.translationQueue.clear();
+
+    // Reset language detection state
+    this.languageDetector = null;
+    this.targetLanguageCount = 0;
+    this.skipLanguageDetection = false;
   }
 }

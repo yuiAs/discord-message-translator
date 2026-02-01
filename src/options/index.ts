@@ -1,6 +1,7 @@
 import { getSettings, updateSettings } from '@/lib/utils/settings';
 import { createStorage } from '@/lib/cache/factory';
 import { ChromeBuiltinTranslator } from '@/lib/api/chrome-builtin';
+import { ChromeLanguageDetector } from '@/lib/api/chrome-language-detector';
 import './styles.css';
 
 // DOM elements
@@ -33,9 +34,13 @@ const autoSaveStatus = document.getElementById('autoSaveStatus') as HTMLDivEleme
 const savingSpinner = document.getElementById('savingSpinner') as HTMLSpanElement;
 const saveStatusText = document.getElementById('saveStatusText') as HTMLSpanElement;
 const chromeBuiltinHint = document.getElementById('chromeBuiltinHint') as HTMLLabelElement;
+const skipTargetLanguageToggle = document.getElementById('skipTargetLanguage') as HTMLInputElement;
+const skipTargetLanguageDesc = document.getElementById('skipTargetLanguageDesc') as HTMLParagraphElement;
+const languageDetectorHint = document.getElementById('languageDetectorHint') as HTMLLabelElement;
 
 let autoSaveTimeout: number | null = null;
 let chromeBuiltinAvailable = false;
+let languageDetectorAvailable = false;
 
 // Tab switching
 tabs.forEach((tab) => {
@@ -139,12 +144,33 @@ async function checkChromeBuiltinAvailability(): Promise<void> {
   }
 }
 
+// Check Chrome Language Detector API availability
+async function checkLanguageDetectorAvailability(): Promise<void> {
+  if (ChromeLanguageDetector.isAvailable()) {
+    const status = await ChromeLanguageDetector.checkAvailability();
+    if (status !== 'unavailable') {
+      languageDetectorAvailable = true;
+      skipTargetLanguageToggle.disabled = false;
+      languageDetectorHint.style.display = 'none';
+      return;
+    }
+  }
+
+  languageDetectorAvailable = false;
+  skipTargetLanguageToggle.disabled = true;
+  skipTargetLanguageToggle.checked = false;
+  languageDetectorHint.style.display = 'block';
+}
+
 // Load settings and reflect in UI
 async function loadSettings() {
   const settings = await getSettings();
 
   // Check Chrome Built-in availability first
   await checkChromeBuiltinAvailability();
+
+  // Check Language Detector availability
+  await checkLanguageDetectorAvailability();
 
   // If saved provider is chrome-builtin but it's not available, fall back to google
   if (settings.translationProvider === 'chrome-builtin' && !chromeBuiltinAvailable) {
@@ -164,6 +190,14 @@ async function loadSettings() {
   openaiModelInput.value = settings.openaiConfig?.model || 'gpt-4';
   cacheTTLDaysInput.value = settings.cacheTTLDays.toString();
   updateCacheTTLDisplay(settings.cacheTTLDays);
+
+  // Language detection toggle - only set if API is available
+  if (languageDetectorAvailable) {
+    skipTargetLanguageToggle.checked = settings.skipTargetLanguage;
+  } else if (settings.skipTargetLanguage) {
+    // If setting was enabled but API is not available, disable it
+    autoSave({ skipTargetLanguage: false });
+  }
 }
 
 // Update cache TTL display
@@ -229,6 +263,11 @@ translationModeSelect.addEventListener('change', () => {
 // Auto Translate toggle
 autoTranslateToggle.addEventListener('change', () => {
   autoSave({ autoTranslate: autoTranslateToggle.checked });
+});
+
+// Skip Target Language toggle
+skipTargetLanguageToggle.addEventListener('change', () => {
+  autoSave({ skipTargetLanguage: skipTargetLanguageToggle.checked });
 });
 
 // Target Language change

@@ -21,6 +21,9 @@ export interface Settings {
 
   // UI settings
   showOriginalOnHover: boolean; // Show original on hover
+
+  // Language detection settings
+  skipTargetLanguage: boolean; // Skip translation if message is already in target language
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -31,4 +34,5 @@ export const DEFAULT_SETTINGS: Settings = {
   autoTranslate: true,
   cacheTTLDays: 7,
   showOriginalOnHover: false,
+  skipTargetLanguage: false,
 };
