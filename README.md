@@ -5,11 +5,10 @@ Chrome Extension to automatically translate Discord messages with Google Transla
 ## Features
 
 - **Auto Translation**: Automatically translate Discord messages as they appear
-- **Multiple Translation Providers**: Support for Google Translate, DeepL, and OpenAI-compatible APIs (GPT-4, Claude, Gemini, etc.)
-- **Automatic Language Detection**: LLM-powered automatic source language detection (OpenAI-compatible APIs)
+- **Multiple Translation Providers**: Support for Chrome Built-in Translator, Google Translate, DeepL, and OpenAI-compatible APIs (GPT-4, Claude, Gemini, etc.)
+- **Chrome Built-in Translator**: Free translation using Chrome's native API (no API key required)
+- **Language Detection**: Skip translation for messages already in target language (using Chrome's Language Detector API)
 - **Smart Caching**: Message ID-based caching with automatic cleanup to reduce API costs
-- **Batch Translation**: Translate multiple messages in a single API request for improved efficiency
-- **Rate Limiting**: Built-in API request rate limiting and debounce control
 - **Intersection Observer**: Only translates visible messages for optimal performance
 - **Translation Modes**: Replace original text or show both original and translation
 - **Cache Visualization**: Monitor cache usage and storage statistics
@@ -124,14 +123,14 @@ discord-message-translator/
 
 ### Settings
 
-- **Translation Provider**: Choose between Google Translate, DeepL, or OpenAI-compatible APIs
+- **Translation Provider**: Choose between Google Translate, DeepL, OpenAI-compatible APIs, or Chrome Built-in Translator
 - **API Configuration**: Configure API keys and provider-specific settings
 - **Target Language**: Choose which language to translate to
+- **Auto Translate**: Enable/disable automatic translation of messages
 - **Translation Mode**:
   - **Replace Original**: Replace the original message with translation
   - **Show Both**: Display both original and translated text
-- **Batch Translation**: Enable batch translation for improved efficiency (when supported by provider)
-- **Rate Limiting**: Configure API request rate limits and debounce delays
+- **Skip Target Language**: Automatically skip translation for messages already in the target language (requires Chrome's Language Detector API)
 - **Cache Settings**:
   - **Cache TTL**: How long to keep translations cached (default: 7 days)
   - **Cache Usage**: View current cache usage and storage statistics
@@ -151,11 +150,15 @@ discord-message-translator/
 - **Intersection Observer**: Only translates messages visible in viewport
 - **Smart Caching**: Avoids duplicate API calls for the same message
 - **100px Root Margin**: Pre-loads translations before scrolling to prevent flickering
-- **Batch Translation**: Groups multiple messages into single API requests
-- **Rate Limiting**: Prevents API rate limit errors with configurable request limits
-- **Debounce Control**: Reduces unnecessary API calls during rapid scrolling
+- **Language Detection**: Skips translation for messages already in target language
 
 ### Translation Providers
+
+#### Chrome Built-in Translator
+- Free translation using Chrome's built-in Translator API
+- No API key required
+- Available in Chrome 138+ with experimental flags enabled
+- Limited language pair support compared to cloud services
 
 #### Google Translate
 - Fast and reliable translation service
