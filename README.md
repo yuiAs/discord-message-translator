@@ -40,7 +40,7 @@ This will create a `dist` folder with the compiled extension.
 ### 4. Configure Translation Provider
 
 1. Click the extension icon in Chrome
-2. Click "Settings"
+2. Open the **API** tab
 3. Select your preferred translation provider:
    - **Google Translate**: Get an API key from [Google Cloud Translation API](https://cloud.google.com/translate/docs)
    - **DeepL**: Get an API key from [DeepL API](https://www.deepl.com/pro-api)
@@ -49,8 +49,7 @@ This will create a `dist` folder with the compiled extension.
      - Anthropic Claude (via compatible endpoints)
      - Google Gemini (via compatible endpoints)
      - Other OpenAI-compatible services
-4. Enter your API key and configure provider-specific settings
-5. Click "Save Settings"
+4. Enter your API key and configure provider-specific settings (auto-saved)
 
 For OpenAI-compatible APIs, you'll need to configure:
 - **Base URL**: API endpoint (e.g., `https://api.openai.com/v1`)
@@ -95,20 +94,19 @@ npm run type-check
 
 ```
 discord-message-translator/
-├── src/
+├── entrypoints/
 │   ├── background/          # Service Worker
 │   ├── content/             # Content Script (injected into Discord)
-│   ├── popup/               # Popup UI
-│   ├── options/             # Settings page
-│   ├── lib/
-│   │   ├── api/             # Translation API clients
-│   │   ├── cache/           # Cache implementation
-│   │   └── utils/           # Utility functions
-│   └── types/               # TypeScript type definitions
+│   └── popup/               # Popup UI (includes all settings)
+├── lib/
+│   ├── api/                 # Translation API clients
+│   ├── cache/               # Cache implementation
+│   └── utils/               # Utility functions
+├── types/                   # TypeScript type definitions
 ├── public/
-│   ├── manifest.json        # Chrome Extension manifest
+│   ├── _locales/            # i18n messages (en, ja)
 │   └── icons/               # Extension icons
-└── dist/                    # Build output (load this in Chrome)
+└── .output/                 # Build output (load this in Chrome)
 ```
 
 ## Usage
