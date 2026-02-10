@@ -10,13 +10,13 @@
   <div class="space-y-4">
     <!-- Header -->
     <div class="text-center">
-      <h1 class="text-xl font-bold">Discord Translator</h1>
+      <h1 class="text-xl font-bold" data-i18n="popup_title">Discord Translator</h1>
     </div>
 
     <!-- Auto Translate Toggle -->
     <div class="form-control">
       <label class="label cursor-pointer">
-        <span class="label-text">Auto Translate</span>
+        <span class="label-text" data-i18n="popup_autoTranslate">Auto Translate</span>
         <input type="checkbox" id="autoTranslate" class="toggle toggle-primary" checked />
       </label>
     </div>
@@ -24,7 +24,7 @@
     <!-- Target Language Selection -->
     <div class="form-control w-full">
       <label class="label">
-        <span class="label-text">Target Language</span>
+        <span class="label-text" data-i18n="popup_targetLanguage">Target Language</span>
       </label>
       <select id="targetLanguage" class="select select-bordered w-full"></select>
     </div>
@@ -32,16 +32,16 @@
     <!-- Translation Mode -->
     <div class="form-control w-full">
       <label class="label">
-        <span class="label-text">Translation Mode</span>
+        <span class="label-text" data-i18n="popup_translationMode">Translation Mode</span>
       </label>
       <select id="translationMode" class="select select-bordered w-full">
-        <option value="replace">Replace Original</option>
-        <option value="append">Show Both</option>
+        <option value="replace" data-i18n="common_modeReplace">Replace Original</option>
+        <option value="append" data-i18n="popup_modeAppend">Show Both</option>
       </select>
     </div>
 
     <!-- Settings Button -->
-    <button id="openSettings" class="btn btn-outline btn-sm w-full">
+    <button id="openSettings" class="btn btn-outline btn-sm w-full" data-i18n="popup_settings">
       Settings
     </button>
 

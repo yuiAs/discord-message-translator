@@ -5,10 +5,10 @@ export default defineConfig({
   srcDir: '.',
   entrypointsDir: 'entrypoints',
   manifest: {
-    name: 'Discord Message Translator',
+    name: '__MSG_extensionName__',
     version: '1.1.0',
-    description:
-      'Automatically translate Discord messages with Google Translate, DeepL, or OpenAI-compatible APIs',
+    description: '__MSG_extensionDescription__',
+    default_locale: 'en',
     permissions: ['storage', 'alarms'],
     host_permissions: [
       'https://discord.com/*',

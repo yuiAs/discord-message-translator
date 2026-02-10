@@ -1,5 +1,6 @@
 import { getSettings, updateSettings } from '@/lib/utils/settings';
 import { populateLanguageSelect } from '@/lib/utils/dom-helpers';
+import { applyI18n, t } from '@/lib/utils/i18n';
 import './styles.css';
 
 const autoTranslateToggle = document.getElementById('autoTranslate') as HTMLInputElement;
@@ -8,6 +9,9 @@ const translationModeSelect = document.getElementById('translationMode') as HTML
 const openSettingsButton = document.getElementById('openSettings') as HTMLButtonElement;
 const statusDiv = document.getElementById('status') as HTMLDivElement;
 const statusText = document.getElementById('statusText') as HTMLSpanElement;
+
+// Apply i18n to static elements
+applyI18n();
 
 // Load settings and reflect in UI
 async function loadSettings() {
@@ -34,14 +38,16 @@ function showStatus(message: string, type: 'info' | 'success' | 'error' = 'succe
 autoTranslateToggle.addEventListener('change', async () => {
   await updateSettings({ autoTranslate: autoTranslateToggle.checked });
   showStatus(
-    autoTranslateToggle.checked ? 'Auto translate enabled' : 'Auto translate disabled'
+    autoTranslateToggle.checked
+      ? t('status_autoTranslateEnabled')
+      : t('status_autoTranslateDisabled')
   );
 });
 
 // Target Language change
 targetLanguageSelect.addEventListener('change', async () => {
   await updateSettings({ targetLanguage: targetLanguageSelect.value });
-  showStatus('Target language updated');
+  showStatus(t('status_targetLanguageUpdated'));
 });
 
 // Translation Mode change
@@ -49,7 +55,7 @@ translationModeSelect.addEventListener('change', async () => {
   await updateSettings({
     translationMode: translationModeSelect.value as 'replace' | 'append',
   });
-  showStatus('Translation mode updated');
+  showStatus(t('status_translationModeUpdated'));
 });
 
 // Settings button
