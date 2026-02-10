@@ -1,4 +1,5 @@
 import { getSettings, updateSettings } from '@/lib/utils/settings';
+import { populateLanguageSelect } from '@/lib/utils/dom-helpers';
 import './styles.css';
 
 const autoTranslateToggle = document.getElementById('autoTranslate') as HTMLInputElement;
@@ -10,6 +11,7 @@ const statusText = document.getElementById('statusText') as HTMLSpanElement;
 
 // Load settings and reflect in UI
 async function loadSettings() {
+  populateLanguageSelect(targetLanguageSelect);
   const settings = await getSettings();
 
   autoTranslateToggle.checked = settings.autoTranslate;
