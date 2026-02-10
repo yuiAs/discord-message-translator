@@ -1,0 +1,18 @@
+* text=auto eol=lf
+
+[attr]lfs-attr filter=lfs diff=lfs merge=lfs -text
+
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.ejs       text eol=lf
+*.svg       text
+*.md        text eol=lf
+*.sh        text eol=lf
+
+*.mjs       text eol=lf
+*.cjs       text eol=lf
+
+*.png       binary
+*.jpg       binary
