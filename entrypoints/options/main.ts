@@ -2,6 +2,7 @@ import { getSettings, updateSettings } from '@/lib/utils/settings';
 import { createStorage } from '@/lib/cache/factory';
 import { ChromeBuiltinTranslator } from '@/lib/api/chrome-builtin';
 import { ChromeLanguageDetector } from '@/lib/api/chrome-language-detector';
+import { populateLanguageSelect, setupPasswordToggle } from '@/lib/utils/dom-helpers';
 import './styles.css';
 
 // DOM elements
@@ -164,6 +165,7 @@ async function checkLanguageDetectorAvailability(): Promise<void> {
 
 // Load settings and reflect in UI
 async function loadSettings() {
+  populateLanguageSelect(targetLanguageSelect);
   const settings = await getSettings();
 
   // Check Chrome Built-in availability first
@@ -329,32 +331,10 @@ openaiModelInput.addEventListener('input', () => {
   });
 });
 
-// Toggle Google API Key visibility
-toggleGoogleApiKeyVisibility.addEventListener('click', () => {
-  if (googleApiKeyInput.type === 'password') {
-    googleApiKeyInput.type = 'text';
-  } else {
-    googleApiKeyInput.type = 'password';
-  }
-});
-
-// Toggle DeepL API Key visibility
-toggleDeeplApiKeyVisibility.addEventListener('click', () => {
-  if (deeplApiKeyInput.type === 'password') {
-    deeplApiKeyInput.type = 'text';
-  } else {
-    deeplApiKeyInput.type = 'password';
-  }
-});
-
-// Toggle OpenAI API Key visibility
-toggleOpenaiApiKeyVisibility.addEventListener('click', () => {
-  if (openaiApiKeyInput.type === 'password') {
-    openaiApiKeyInput.type = 'text';
-  } else {
-    openaiApiKeyInput.type = 'password';
-  }
-});
+// Toggle API Key visibility
+setupPasswordToggle(toggleGoogleApiKeyVisibility, googleApiKeyInput);
+setupPasswordToggle(toggleDeeplApiKeyVisibility, deeplApiKeyInput);
+setupPasswordToggle(toggleOpenaiApiKeyVisibility, openaiApiKeyInput);
 
 // Cache TTL input
 cacheTTLDaysInput.addEventListener('input', () => {
