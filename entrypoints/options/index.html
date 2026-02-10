@@ -11,10 +11,10 @@
     <!-- Header with Auto-save Status -->
     <div class="mb-8 flex items-center justify-between">
       <div>
-        <h1 class="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent" data-i18n="extensionName">
           Discord Message Translator
         </h1>
-        <p class="text-base-content/70 mt-2">Configure your translation preferences</p>
+        <p class="text-base-content/70 mt-2" data-i18n="options_subtitle">Configure your translation preferences</p>
       </div>
       <div id="autoSaveStatus" class="flex items-center gap-2 opacity-0 transition-opacity duration-300">
         <span class="loading loading-spinner loading-sm text-primary hidden" id="savingSpinner"></span>
@@ -29,19 +29,19 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-        General
+        <span data-i18n="options_tabGeneral">General</span>
       </a>
       <a role="tab" class="tab" data-tab="api">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-        API Keys
+        <span data-i18n="options_tabApi">API Keys</span>
       </a>
       <a role="tab" class="tab" data-tab="cache">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
         </svg>
-        Cache
+        <span data-i18n="options_tabCache">Cache</span>
       </a>
     </div>
 
@@ -53,15 +53,15 @@
           <!-- Translation Mode -->
           <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
             <div class="card-body">
-              <h2 class="card-title text-xl mb-4">Translation Mode</h2>
+              <h2 class="card-title text-xl mb-4" data-i18n="options_translationMode">Translation Mode</h2>
               <div class="form-control w-full">
                 <label class="label">
-                  <span class="label-text font-medium">Display Mode</span>
-                  <span class="label-text-alt">How translations are shown</span>
+                  <span class="label-text font-medium" data-i18n="options_displayMode">Display Mode</span>
+                  <span class="label-text-alt" data-i18n="options_displayModeHint">How translations are shown</span>
                 </label>
                 <select id="translationMode" class="select select-bordered w-full">
-                  <option value="replace">Replace Original</option>
-                  <option value="append">Show Both (Original + Translation)</option>
+                  <option value="replace" data-i18n="common_modeReplace">Replace Original</option>
+                  <option value="append" data-i18n="options_modeAppend">Show Both (Original + Translation)</option>
                 </select>
               </div>
             </div>
@@ -70,13 +70,13 @@
           <!-- Auto-translate Toggle -->
           <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
             <div class="card-body">
-              <h2 class="card-title text-xl mb-4">Auto-Translation</h2>
+              <h2 class="card-title text-xl mb-4" data-i18n="options_autoTranslation">Auto-Translation</h2>
               <div class="form-control">
                 <label class="label cursor-pointer justify-start gap-4">
                   <input type="checkbox" id="autoTranslate" class="toggle toggle-primary toggle-lg" checked />
                   <div>
-                    <span class="label-text font-medium text-base">Enable automatic translation</span>
-                    <p class="text-sm text-base-content/60 mt-1">Automatically translate messages as they appear</p>
+                    <span class="label-text font-medium text-base" data-i18n="options_enableAutoTranslate">Enable automatic translation</span>
+                    <p class="text-sm text-base-content/60 mt-1" data-i18n="options_autoTranslateDesc">Automatically translate messages as they appear</p>
                   </div>
                 </label>
               </div>
@@ -85,12 +85,12 @@
                 <label class="label cursor-pointer justify-start gap-4">
                   <input type="checkbox" id="skipTargetLanguage" class="toggle toggle-secondary toggle-lg" disabled />
                   <div>
-                    <span class="label-text font-medium text-base">Skip messages already in target language</span>
-                    <p class="text-sm text-base-content/60 mt-1" id="skipTargetLanguageDesc">Uses Chrome Language Detection API to detect message language</p>
+                    <span class="label-text font-medium text-base" data-i18n="options_skipTargetLanguage">Skip messages already in target language</span>
+                    <p class="text-sm text-base-content/60 mt-1" id="skipTargetLanguageDesc" data-i18n="options_skipTargetLanguageDesc">Uses Chrome Language Detection API to detect message language</p>
                   </div>
                 </label>
                 <label class="label pt-0" id="languageDetectorHint" style="display: none;">
-                  <span class="label-text-alt text-warning">Requires Chrome 138+ with Language Detection API enabled</span>
+                  <span class="label-text-alt text-warning" data-i18n="options_skipTargetLanguageHint">Requires Chrome 138+ with Language Detection API enabled</span>
                 </label>
               </div>
             </div>
@@ -99,10 +99,10 @@
           <!-- Target Language -->
           <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
             <div class="card-body">
-              <h2 class="card-title text-xl mb-4">Target Language</h2>
+              <h2 class="card-title text-xl mb-4" data-i18n="options_targetLanguage">Target Language</h2>
               <div class="form-control w-full">
                 <label class="label">
-                  <span class="label-text font-medium">Translate to</span>
+                  <span class="label-text font-medium" data-i18n="options_translateTo">Translate to</span>
                 </label>
                 <select id="targetLanguage" class="select select-bordered w-full"></select>
               </div>
@@ -117,19 +117,19 @@
           <!-- Translation Provider -->
           <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
             <div class="card-body">
-              <h2 class="card-title text-xl mb-4">Translation Provider</h2>
+              <h2 class="card-title text-xl mb-4" data-i18n="options_translationProvider">Translation Provider</h2>
               <div class="form-control w-full">
                 <label class="label">
-                  <span class="label-text font-medium">Select Provider</span>
+                  <span class="label-text font-medium" data-i18n="options_selectProvider">Select Provider</span>
                 </label>
                 <select id="translationProvider" class="select select-bordered w-full">
-                  <option value="chrome-builtin" disabled>Chrome Built-in (Checking...)</option>
-                  <option value="google">Google Translate</option>
-                  <option value="deepl">DeepL</option>
-                  <option value="openai">OpenAI Compatible</option>
+                  <option value="chrome-builtin" disabled data-i18n="options_chromeBuiltinChecking">Chrome Built-in (Checking...)</option>
+                  <option value="google" data-i18n="options_providerGoogle">Google Translate</option>
+                  <option value="deepl" data-i18n="options_providerDeepl">DeepL</option>
+                  <option value="openai" data-i18n="options_providerOpenai">OpenAI Compatible</option>
                 </select>
                 <label class="label" id="chromeBuiltinHint" style="display: none;">
-                  <span class="label-text-alt text-warning">Chrome Built-in requires Chrome 138+ with Translator API enabled</span>
+                  <span class="label-text-alt text-warning" data-i18n="options_chromeBuiltinHint">Chrome Built-in requires Chrome 138+ with Translator API enabled</span>
                 </label>
               </div>
             </div>
@@ -139,20 +139,21 @@
           <div id="googleApiKeySection" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
             <div class="card-body">
               <div class="flex items-center justify-between mb-4">
-                <h2 class="card-title text-xl">Google Translate API</h2>
-                <a href="https://cloud.google.com/translate/docs" target="_blank" class="btn btn-sm btn-outline btn-primary">
+                <h2 class="card-title text-xl" data-i18n="options_googleTranslateApi">Google Translate API</h2>
+                <a href="https://cloud.google.com/translate/docs" target="_blank" class="btn btn-sm btn-outline btn-primary" data-i18n="options_getApiKey">
                   Get API Key
                 </a>
               </div>
               <div class="form-control w-full">
                 <label class="label">
-                  <span class="label-text font-medium">API Key</span>
+                  <span class="label-text font-medium" data-i18n="options_apiKey">API Key</span>
                 </label>
                 <div class="relative">
                   <input
                     type="password"
                     id="googleApiKey"
                     placeholder="Enter your Google Translate API key"
+                    data-i18n-placeholder="options_googleApiKeyPlaceholder"
                     class="input input-bordered w-full pr-24"
                   />
                   <button
@@ -167,7 +168,7 @@
                   </button>
                 </div>
                 <label class="label">
-                  <span class="label-text-alt">Your API key is stored locally and never shared</span>
+                  <span class="label-text-alt" data-i18n="options_apiKeyLocalNote">Your API key is stored locally and never shared</span>
                 </label>
               </div>
             </div>
@@ -177,20 +178,21 @@
           <div id="deeplApiKeySection" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
             <div class="card-body">
               <div class="flex items-center justify-between mb-4">
-                <h2 class="card-title text-xl">DeepL API</h2>
-                <a href="https://www.deepl.com/pro-api" target="_blank" class="btn btn-sm btn-outline btn-primary">
+                <h2 class="card-title text-xl" data-i18n="options_deeplApi">DeepL API</h2>
+                <a href="https://www.deepl.com/pro-api" target="_blank" class="btn btn-sm btn-outline btn-primary" data-i18n="options_getApiKey">
                   Get API Key
                 </a>
               </div>
               <div class="form-control w-full">
                 <label class="label">
-                  <span class="label-text font-medium">API Key</span>
+                  <span class="label-text font-medium" data-i18n="options_apiKey">API Key</span>
                 </label>
                 <div class="relative">
                   <input
                     type="password"
                     id="deeplApiKey"
                     placeholder="Enter your DeepL API key"
+                    data-i18n-placeholder="options_deeplApiKeyPlaceholder"
                     class="input input-bordered w-full pr-24"
                   />
                   <button
@@ -205,7 +207,7 @@
                   </button>
                 </div>
                 <label class="label">
-                  <span class="label-text-alt">Supports both free and paid accounts</span>
+                  <span class="label-text-alt" data-i18n="options_deeplAccountNote">Supports both free and paid accounts</span>
                 </label>
               </div>
             </div>
@@ -215,21 +217,22 @@
           <div id="openaiApiSection" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
             <div class="card-body">
               <div class="flex items-center justify-between mb-4">
-                <h2 class="card-title text-xl">OpenAI Compatible API</h2>
-                <a href="https://platform.openai.com/api-keys" target="_blank" class="btn btn-sm btn-outline btn-primary">
+                <h2 class="card-title text-xl" data-i18n="options_openaiCompatibleApi">OpenAI Compatible API</h2>
+                <a href="https://platform.openai.com/api-keys" target="_blank" class="btn btn-sm btn-outline btn-primary" data-i18n="options_getApiKey">
                   Get API Key
                 </a>
               </div>
 
               <div class="form-control w-full mb-4">
                 <label class="label">
-                  <span class="label-text font-medium">API Key</span>
+                  <span class="label-text font-medium" data-i18n="options_apiKey">API Key</span>
                 </label>
                 <div class="relative">
                   <input
                     type="password"
                     id="openaiApiKey"
                     placeholder="Enter your API key"
+                    data-i18n-placeholder="options_openaiApiKeyPlaceholder"
                     class="input input-bordered w-full pr-24"
                   />
                   <button
@@ -247,7 +250,7 @@
 
               <div class="form-control w-full mb-4">
                 <label class="label">
-                  <span class="label-text font-medium">Base URL</span>
+                  <span class="label-text font-medium" data-i18n="options_baseUrl">Base URL</span>
                 </label>
                 <input
                   type="text"
@@ -256,13 +259,13 @@
                   class="input input-bordered w-full"
                 />
                 <label class="label">
-                  <span class="label-text-alt">e.g., https://api.openai.com/v1 or custom endpoint</span>
+                  <span class="label-text-alt" data-i18n="options_baseUrlHint">e.g., https://api.openai.com/v1 or custom endpoint</span>
                 </label>
               </div>
 
               <div class="form-control w-full">
                 <label class="label">
-                  <span class="label-text font-medium">Model</span>
+                  <span class="label-text font-medium" data-i18n="options_model">Model</span>
                 </label>
                 <input
                   type="text"
@@ -271,7 +274,7 @@
                   class="input input-bordered w-full"
                 />
                 <label class="label">
-                  <span class="label-text-alt">e.g., gpt-4, gpt-3.5-turbo, claude-3-5-sonnet-20241022</span>
+                  <span class="label-text-alt" data-i18n="options_modelHint">e.g., gpt-4, gpt-3.5-turbo, claude-3-5-sonnet-20241022</span>
                 </label>
               </div>
             </div>
@@ -285,11 +288,11 @@
           <!-- Cache TTL -->
           <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
             <div class="card-body">
-              <h2 class="card-title text-xl mb-4">Cache Duration</h2>
+              <h2 class="card-title text-xl mb-4" data-i18n="options_cacheDuration">Cache Duration</h2>
               <div class="form-control w-full">
                 <label class="label">
-                  <span class="label-text font-medium">Cache TTL (days)</span>
-                  <span class="label-text-alt">Default: 7 days</span>
+                  <span class="label-text font-medium" data-i18n="options_cacheTTL">Cache TTL (days)</span>
+                  <span class="label-text-alt" data-i18n="options_cacheTTLDefault">Default: 7 days</span>
                 </label>
                 <input
                   type="range"
@@ -301,9 +304,9 @@
                   step="1"
                 />
                 <div class="w-full flex justify-between text-xs px-2 mt-2">
-                  <span>1 day</span>
+                  <span>1</span>
                   <span id="cacheTTLValue" class="font-bold text-primary">7 days</span>
-                  <span>30 days</span>
+                  <span>30</span>
                 </div>
               </div>
             </div>
@@ -312,13 +315,13 @@
           <!-- Cache Usage Stats -->
           <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
             <div class="card-body">
-              <h2 class="card-title text-xl mb-4">Cache Usage</h2>
+              <h2 class="card-title text-xl mb-4" data-i18n="options_cacheUsage">Cache Usage</h2>
 
               <!-- Storage Usage Progress -->
               <div class="mb-6">
                 <div class="flex justify-between items-center mb-2">
-                  <span class="text-sm font-medium">Storage Usage</span>
-                  <span class="text-sm font-bold" id="cacheUsageText">Loading...</span>
+                  <span class="text-sm font-medium" data-i18n="options_storageUsage">Storage Usage</span>
+                  <span class="text-sm font-bold" id="cacheUsageText" data-i18n="options_loading">Loading...</span>
                 </div>
                 <progress id="cacheUsageProgress" class="progress progress-primary w-full h-4" value="0" max="100"></progress>
                 <div class="flex justify-between text-xs text-base-content/60 mt-1">
@@ -330,11 +333,11 @@
               <!-- Cache Statistics Grid -->
               <div class="grid grid-cols-2 gap-4 mb-4">
                 <div class="stat bg-base-200 rounded-lg p-4">
-                  <div class="stat-title text-xs">Cached Entries</div>
+                  <div class="stat-title text-xs" data-i18n="options_cachedEntries">Cached Entries</div>
                   <div class="stat-value text-2xl" id="cacheEntryCount">0</div>
                 </div>
                 <div class="stat bg-base-200 rounded-lg p-4">
-                  <div class="stat-title text-xs">Expired Entries</div>
+                  <div class="stat-title text-xs" data-i18n="options_expiredEntries">Expired Entries</div>
                   <div class="stat-value text-2xl" id="cacheExpiredCount">0</div>
                 </div>
               </div>
@@ -344,7 +347,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  Refresh Stats
+                  <span data-i18n="options_refreshStats">Refresh Stats</span>
                 </button>
               </div>
             </div>
@@ -353,18 +356,18 @@
           <!-- Cache Actions -->
           <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
             <div class="card-body">
-              <h2 class="card-title text-xl mb-4">Cache Management</h2>
+              <h2 class="card-title text-xl mb-4" data-i18n="options_cacheManagement">Cache Management</h2>
               <div class="alert alert-info mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                <span class="text-sm">Cached translations reduce API costs and improve performance</span>
+                <span class="text-sm" data-i18n="options_cacheInfoNote">Cached translations reduce API costs and improve performance</span>
               </div>
               <button id="clearCache" class="btn btn-warning btn-block">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                Clear All Cached Translations
+                <span data-i18n="options_clearAllCache">Clear All Cached Translations</span>
               </button>
             </div>
           </div>

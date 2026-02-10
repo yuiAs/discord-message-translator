@@ -3,6 +3,7 @@ import { createStorage } from '@/lib/cache/factory';
 import { ChromeBuiltinTranslator } from '@/lib/api/chrome-builtin';
 import { ChromeLanguageDetector } from '@/lib/api/chrome-language-detector';
 import { populateLanguageSelect, setupPasswordToggle } from '@/lib/utils/dom-helpers';
+import { applyI18n, t } from '@/lib/utils/i18n';
 import './styles.css';
 
 // DOM elements
@@ -42,6 +43,9 @@ const languageDetectorHint = document.getElementById('languageDetectorHint') as 
 let autoSaveTimeout: number | null = null;
 let chromeBuiltinAvailable = false;
 let languageDetectorAvailable = false;
+
+// Apply i18n to static elements
+applyI18n();
 
 // Tab switching
 tabs.forEach((tab) => {
@@ -84,11 +88,11 @@ function showAutoSaveStatus(status: 'saving' | 'saved' | 'error') {
 
   if (status === 'saving') {
     savingSpinner.classList.remove('hidden');
-    saveStatusText.textContent = 'Saving...';
+    saveStatusText.textContent = t('status_saving');
     saveStatusText.className = 'text-sm text-base-content/70 font-medium';
   } else if (status === 'saved') {
     savingSpinner.classList.add('hidden');
-    saveStatusText.textContent = 'Saved';
+    saveStatusText.textContent = t('status_saved');
     saveStatusText.className = 'text-sm text-success font-medium';
 
     // Hide after 2 seconds
@@ -97,7 +101,7 @@ function showAutoSaveStatus(status: 'saving' | 'saved' | 'error') {
     }, 2000);
   } else {
     savingSpinner.classList.add('hidden');
-    saveStatusText.textContent = 'Save failed';
+    saveStatusText.textContent = t('status_saveFailed');
     saveStatusText.className = 'text-sm text-error font-medium';
 
     setTimeout(() => {
@@ -135,12 +139,12 @@ async function checkChromeBuiltinAvailability(): Promise<void> {
   if (ChromeBuiltinTranslator.isAvailable()) {
     chromeBuiltinAvailable = true;
     chromeBuiltinOption.disabled = false;
-    chromeBuiltinOption.textContent = 'Chrome Built-in (Free, No API Key)';
+    chromeBuiltinOption.textContent = t('options_chromeBuiltinFree');
     chromeBuiltinHint.style.display = 'none';
   } else {
     chromeBuiltinAvailable = false;
     chromeBuiltinOption.disabled = true;
-    chromeBuiltinOption.textContent = 'Chrome Built-in (Not Available)';
+    chromeBuiltinOption.textContent = t('options_chromeBuiltinUnavailable');
     chromeBuiltinHint.style.display = 'block';
   }
 }
@@ -204,7 +208,8 @@ async function loadSettings() {
 
 // Update cache TTL display
 function updateCacheTTLDisplay(days: number) {
-  cacheTTLValue.textContent = `${days} day${days > 1 ? 's' : ''}`;
+  const key = days === 1 ? 'options_cacheTTLDay' : 'options_cacheTTLDays';
+  cacheTTLValue.textContent = t(key, [days.toString()]);
 }
 
 // Format bytes to human-readable format
@@ -350,10 +355,10 @@ refreshCacheStatsButton.addEventListener('click', async () => {
     refreshCacheStatsButton.classList.add('loading');
 
     await loadCacheStats();
-    showToast('Cache statistics refreshed', 'success');
+    showToast(t('status_cacheRefreshed'), 'success');
   } catch (error) {
     console.error('Failed to refresh cache stats:', error);
-    showToast('Failed to refresh cache statistics', 'error');
+    showToast(t('status_cacheRefreshFailed'), 'error');
   } finally {
     refreshCacheStatsButton.disabled = false;
     refreshCacheStatsButton.classList.remove('loading');
@@ -362,7 +367,7 @@ refreshCacheStatsButton.addEventListener('click', async () => {
 
 // Clear cache
 clearCacheButton.addEventListener('click', async () => {
-  if (!confirm('Are you sure you want to clear all cached translations?')) {
+  if (!confirm(t('confirm_clearCache'))) {
     return;
   }
 
@@ -376,10 +381,10 @@ clearCacheButton.addEventListener('click', async () => {
     // Refresh stats after clearing
     await loadCacheStats();
 
-    showToast('Cache cleared successfully!', 'success');
+    showToast(t('status_cacheCleared'), 'success');
   } catch (error) {
     console.error('Failed to clear cache:', error);
-    showToast('Failed to clear cache', 'error');
+    showToast(t('status_cacheClearFailed'), 'error');
   } finally {
     clearCacheButton.disabled = false;
     clearCacheButton.classList.remove('loading');
