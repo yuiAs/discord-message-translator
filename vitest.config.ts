@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'happy-dom',
       setupFiles: ['./vitest.setup.ts'],
+      include: ['lib/**/*.test.ts', 'entrypoints/**/*.test.ts'],
       env: {
         // Make API keys available in tests
         GOOGLE_CLOUD_TRANSLATION_API_KEY: env.GOOGLE_CLOUD_TRANSLATION_API_KEY || '',
@@ -24,6 +25,8 @@ export default defineConfig(({ mode }) => {
           'node_modules/',
           'dist/',
           '.tmp/',
+          '.wxt/',
+          '.output/',
           '**/*.test.ts',
           '**/*.spec.ts',
         ],
@@ -31,7 +34,7 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@': resolve(__dirname, 'src'),
+        '@': resolve(__dirname),
       },
     },
   };
