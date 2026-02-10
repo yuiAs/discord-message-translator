@@ -25,9 +25,6 @@
   "popup_modeAppend": {
     "message": "両方表示"
   },
-  "popup_settings": {
-    "message": "設定"
-  },
 
   "status_autoTranslateEnabled": {
     "message": "自動翻訳を有効にしました"

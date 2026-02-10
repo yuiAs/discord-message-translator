@@ -36,7 +36,6 @@ const mockRuntime = {
     addListener: vi.fn(),
     removeListener: vi.fn(),
   },
-  openOptionsPage: vi.fn(),
 };
 
 // Setup global chrome object

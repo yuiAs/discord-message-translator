@@ -25,9 +25,6 @@
   "popup_modeAppend": {
     "message": "Show Both"
   },
-  "popup_settings": {
-    "message": "Settings"
-  },
 
   "status_autoTranslateEnabled": {
     "message": "Auto translate enabled"
