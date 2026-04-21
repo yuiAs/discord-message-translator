@@ -15,7 +15,7 @@
     </div>
 
     <!-- Tabs Navigation -->
-    <div role="tablist" class="tabs tabs-sm tabs-boxed">
+    <div role="tablist" class="tabs tabs-sm tabs-box">
       <a role="tab" class="tab tab-active" data-tab="general">
         <span data-i18n="options_tabGeneral">General</span>
       </a>
@@ -33,35 +33,35 @@
       <div class="tab-panel" data-panel="general">
         <div class="space-y-3">
           <!-- Target Language -->
-          <div class="form-control w-full">
+          <div class="flex flex-col w-full">
             <label class="label py-1">
-              <span class="label-text text-sm" data-i18n="popup_targetLanguage">Target Language</span>
+              <span class="text-sm" data-i18n="popup_targetLanguage">Target Language</span>
             </label>
-            <select id="targetLanguage" class="select select-bordered select-sm w-full"></select>
+            <select id="targetLanguage" class="select select-sm w-full"></select>
           </div>
 
           <!-- Translation Mode -->
-          <div class="form-control w-full">
+          <div class="flex flex-col w-full">
             <label class="label py-1">
-              <span class="label-text text-sm" data-i18n="popup_translationMode">Translation Mode</span>
+              <span class="text-sm" data-i18n="popup_translationMode">Translation Mode</span>
             </label>
-            <select id="translationMode" class="select select-bordered select-sm w-full">
+            <select id="translationMode" class="select select-sm w-full">
               <option value="replace" data-i18n="common_modeReplace">Replace Original</option>
               <option value="append" data-i18n="popup_modeAppend">Show Both</option>
             </select>
           </div>
 
           <!-- Skip Target Language -->
-          <div class="form-control">
+          <div class="flex flex-col">
             <label class="label cursor-pointer justify-start gap-3 py-1">
               <input type="checkbox" id="skipTargetLanguage" class="toggle toggle-secondary toggle-sm" disabled />
               <div>
-                <span class="label-text text-sm" data-i18n="options_skipTargetLanguage">Skip messages already in target language</span>
+                <span class="text-sm" data-i18n="options_skipTargetLanguage">Skip messages already in target language</span>
                 <p class="text-xs text-base-content/60" id="skipTargetLanguageDesc" data-i18n="options_skipTargetLanguageDesc">Uses Chrome Language Detection API</p>
               </div>
             </label>
             <label class="label py-0" id="languageDetectorHint" style="display: none;">
-              <span class="label-text-alt text-warning text-xs" data-i18n="options_skipTargetLanguageHint">Requires Chrome 138+ with Language Detection API enabled</span>
+              <span class="text-warning text-xs" data-i18n="options_skipTargetLanguageHint">Requires Chrome 138+ with Language Detection API enabled</span>
             </label>
           </div>
         </div>
@@ -71,29 +71,29 @@
       <div class="tab-panel hidden" data-panel="api">
         <div class="space-y-3">
           <!-- Translation Provider -->
-          <div class="form-control w-full">
+          <div class="flex flex-col w-full">
             <label class="label py-1">
-              <span class="label-text text-sm" data-i18n="options_selectProvider">Provider</span>
+              <span class="text-sm" data-i18n="options_selectProvider">Provider</span>
             </label>
-            <select id="translationProvider" class="select select-bordered select-sm w-full">
+            <select id="translationProvider" class="select select-sm w-full">
               <option value="chrome-builtin" disabled data-i18n="options_chromeBuiltinChecking">Chrome Built-in (Checking...)</option>
               <option value="google" data-i18n="options_providerGoogle">Google Translate</option>
               <option value="deepl" data-i18n="options_providerDeepl">DeepL</option>
               <option value="openai" data-i18n="options_providerOpenai">OpenAI Compatible</option>
             </select>
             <label class="label py-0" id="chromeBuiltinHint" style="display: none;">
-              <span class="label-text-alt text-warning text-xs" data-i18n="options_chromeBuiltinHint">Chrome Built-in requires Chrome 138+ with Translator API enabled</span>
+              <span class="text-warning text-xs" data-i18n="options_chromeBuiltinHint">Chrome Built-in requires Chrome 138+ with Translator API enabled</span>
             </label>
           </div>
 
           <!-- Google API Key -->
           <div id="googleApiKeySection" class="space-y-1 hidden">
             <div class="flex items-center justify-between">
-              <span class="label-text text-sm font-medium" data-i18n="options_googleTranslateApi">Google Translate API</span>
+              <span class="text-sm font-medium" data-i18n="options_googleTranslateApi">Google Translate API</span>
               <a href="https://cloud.google.com/translate/docs" target="_blank" class="link link-primary text-xs" data-i18n="options_getApiKey">Get API Key</a>
             </div>
             <div class="relative">
-              <input type="password" id="googleApiKey" data-i18n-placeholder="options_googleApiKeyPlaceholder" placeholder="Enter your Google API key" class="input input-bordered input-sm w-full pr-10" />
+              <input type="password" id="googleApiKey" data-i18n-placeholder="options_googleApiKeyPlaceholder" placeholder="Enter your Google API key" class="input input-sm w-full pr-10" />
               <button type="button" id="toggleGoogleApiKeyVisibility" class="btn btn-xs btn-ghost absolute right-1 top-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -106,11 +106,11 @@
           <!-- DeepL API Key -->
           <div id="deeplApiKeySection" class="space-y-1 hidden">
             <div class="flex items-center justify-between">
-              <span class="label-text text-sm font-medium" data-i18n="options_deeplApi">DeepL API</span>
+              <span class="text-sm font-medium" data-i18n="options_deeplApi">DeepL API</span>
               <a href="https://www.deepl.com/pro-api" target="_blank" class="link link-primary text-xs" data-i18n="options_getApiKey">Get API Key</a>
             </div>
             <div class="relative">
-              <input type="password" id="deeplApiKey" data-i18n-placeholder="options_deeplApiKeyPlaceholder" placeholder="Enter your DeepL API key" class="input input-bordered input-sm w-full pr-10" />
+              <input type="password" id="deeplApiKey" data-i18n-placeholder="options_deeplApiKeyPlaceholder" placeholder="Enter your DeepL API key" class="input input-sm w-full pr-10" />
               <button type="button" id="toggleDeeplApiKeyVisibility" class="btn btn-xs btn-ghost absolute right-1 top-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -123,11 +123,11 @@
           <!-- OpenAI Section -->
           <div id="openaiApiSection" class="space-y-2 hidden">
             <div class="flex items-center justify-between">
-              <span class="label-text text-sm font-medium" data-i18n="options_openaiCompatibleApi">OpenAI Compatible API</span>
+              <span class="text-sm font-medium" data-i18n="options_openaiCompatibleApi">OpenAI Compatible API</span>
               <a href="https://platform.openai.com/api-keys" target="_blank" class="link link-primary text-xs" data-i18n="options_getApiKey">Get API Key</a>
             </div>
             <div class="relative">
-              <input type="password" id="openaiApiKey" data-i18n-placeholder="options_openaiApiKeyPlaceholder" placeholder="Enter your API key" class="input input-bordered input-sm w-full pr-10" />
+              <input type="password" id="openaiApiKey" data-i18n-placeholder="options_openaiApiKeyPlaceholder" placeholder="Enter your API key" class="input input-sm w-full pr-10" />
               <button type="button" id="toggleOpenaiApiKeyVisibility" class="btn btn-xs btn-ghost absolute right-1 top-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -135,17 +135,17 @@
                 </svg>
               </button>
             </div>
-            <div class="form-control w-full">
+            <div class="flex flex-col w-full">
               <label class="label py-0">
-                <span class="label-text text-xs" data-i18n="options_baseUrl">Base URL</span>
+                <span class="text-xs" data-i18n="options_baseUrl">Base URL</span>
               </label>
-              <input type="text" id="openaiBaseUrl" placeholder="https://api.openai.com/v1" class="input input-bordered input-sm w-full" />
+              <input type="text" id="openaiBaseUrl" placeholder="https://api.openai.com/v1" class="input input-sm w-full" />
             </div>
-            <div class="form-control w-full">
+            <div class="flex flex-col w-full">
               <label class="label py-0">
-                <span class="label-text text-xs" data-i18n="options_model">Model</span>
+                <span class="text-xs" data-i18n="options_model">Model</span>
               </label>
-              <input type="text" id="openaiModel" placeholder="gpt-4" class="input input-bordered input-sm w-full" />
+              <input type="text" id="openaiModel" placeholder="gpt-4" class="input input-sm w-full" />
             </div>
           </div>
 
@@ -162,10 +162,10 @@
       <div class="tab-panel hidden" data-panel="cache">
         <div class="space-y-3">
           <!-- Cache TTL -->
-          <div class="form-control w-full">
+          <div class="flex flex-col w-full">
             <label class="label py-1">
-              <span class="label-text text-sm" data-i18n="options_cacheTTL">Cache TTL (days)</span>
-              <span class="label-text-alt text-xs" id="cacheTTLValue">7 days</span>
+              <span class="text-sm" data-i18n="options_cacheTTL">Cache TTL (days)</span>
+              <span class="text-xs" id="cacheTTLValue">7 days</span>
             </label>
             <input type="range" id="cacheTTLDays" min="1" max="30" value="7" class="range range-primary range-sm" step="1" />
             <div class="w-full flex justify-between text-xs px-1 mt-1 text-base-content/50">
