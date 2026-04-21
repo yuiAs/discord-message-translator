@@ -6,7 +6,7 @@ export default defineConfig({
   entrypointsDir: 'entrypoints',
   manifest: {
     name: '__MSG_extensionName__',
-    version: '1.2.0',
+    version: '1.3.0',
     description: '__MSG_extensionDescription__',
     default_locale: 'en',
     permissions: ['storage', 'alarms'],
