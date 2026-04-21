@@ -242,13 +242,35 @@ function generateHash(str: string): string {
 }
 
 /**
+ * Return true if a message's accessories contain at least one embed section
+ * with non-empty visible text. Used to keep embed-only bot messages on the
+ * translation path even when message-content is empty.
+ */
+function hasTranslatableEmbed(element: HTMLElement): boolean {
+  const accessories = element.querySelector('[id^="message-accessories-"]');
+  if (!accessories) return false;
+  for (const selector of EMBED_CONTENT_SELECTORS) {
+    const sections = accessories.querySelectorAll(selector);
+    for (const section of sections) {
+      if (extractVisibleText(section as HTMLElement)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
  * Create Discord message object
  */
 export function createDiscordMessage(element: HTMLElement): DiscordMessage | null {
   const id = extractMessageId(element);
-  const content = extractMessageText(element);
+  if (!id) return null;
 
-  if (!id || !content) return null;
+  const content = extractMessageText(element);
+  // Accept the message when main content has text OR when the message carries
+  // a translatable embed (bot messages often have only embed payloads).
+  if (!content && !hasTranslatableEmbed(element)) return null;
 
   return {
     id,
