@@ -147,9 +147,9 @@ vite.config.ts.timestamp-*
 .tmp/
 
 # Claude Code
-.claude/
+.claude/plans/
+.claude/settings.local.json
 .serena/
-CLAUDE.md
 
-# Documents
+# Development
 docs/dev/*
