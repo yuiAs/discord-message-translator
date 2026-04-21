@@ -21,8 +21,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@types/chrome": "^0.0.256",
-    "@types/dom-chromium-ai": "^0.0.13",
+    "@types/chrome": "^0.1.40",
+    "@types/dom-chromium-ai": "^0.0.16",
     "@types/node": "^20.19.39",
     "@vitest/coverage-v8": "^4.1.5",
     "@vitest/ui": "^4.1.5",
