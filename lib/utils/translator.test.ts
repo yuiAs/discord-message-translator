@@ -14,21 +14,21 @@ vi.mock('./settings', () => ({
 }));
 
 vi.mock('@/lib/api/google-translate', () => ({
-  GoogleTranslateClient: vi.fn().mockImplementation(() => ({
-    translate: vi.fn(),
-  })),
+  GoogleTranslateClient: vi.fn().mockImplementation(function () {
+    return { translate: vi.fn() };
+  }),
 }));
 
 vi.mock('@/lib/api/deepl', () => ({
-  DeepLClient: vi.fn().mockImplementation(() => ({
-    translate: vi.fn(),
-  })),
+  DeepLClient: vi.fn().mockImplementation(function () {
+    return { translate: vi.fn() };
+  }),
 }));
 
 vi.mock('@/lib/api/openai-compatible', () => ({
-  OpenAICompatibleClient: vi.fn().mockImplementation(() => ({
-    translate: vi.fn(),
-  })),
+  OpenAICompatibleClient: vi.fn().mockImplementation(function () {
+    return { translate: vi.fn() };
+  }),
 }));
 
 import { createStorage } from '@/lib/cache/factory';
@@ -52,9 +52,9 @@ describe('Translator Utilities', () => {
     mockTranslate = vi.fn();
 
     vi.mocked(createStorage).mockResolvedValue(mockStorage);
-    vi.mocked(GoogleTranslateClient).mockImplementation(() => ({
-      translate: mockTranslate,
-    }) as any);
+    vi.mocked(GoogleTranslateClient).mockImplementation(function () {
+      return { translate: mockTranslate } as any;
+    });
   });
 
   describe('translateMessage', () => {
@@ -110,9 +110,9 @@ describe('Translator Utilities', () => {
 
       mockStorage.get.mockResolvedValue(null);
       const mockDeepLTranslate = vi.fn().mockResolvedValue(translation);
-      vi.mocked(DeepLClient).mockImplementation(() => ({
-        translate: mockDeepLTranslate,
-      }) as any);
+      vi.mocked(DeepLClient).mockImplementation(function () {
+        return { translate: mockDeepLTranslate } as any;
+      });
 
       vi.mocked(getSettings).mockResolvedValue({
         translationProvider: 'deepl',
@@ -131,9 +131,9 @@ describe('Translator Utilities', () => {
 
       mockStorage.get.mockResolvedValue(null);
       const mockOpenAITranslate = vi.fn().mockResolvedValue(translation);
-      vi.mocked(OpenAICompatibleClient).mockImplementation(() => ({
-        translate: mockOpenAITranslate,
-      }) as any);
+      vi.mocked(OpenAICompatibleClient).mockImplementation(function () {
+        return { translate: mockOpenAITranslate } as any;
+      });
 
       vi.mocked(getSettings).mockResolvedValue({
         translationProvider: 'openai',
