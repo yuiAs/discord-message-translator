@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { getSettings, updateSettings } from './settings';
 import { DEFAULT_SETTINGS } from '@/types/settings';
+import { mockedAsync } from '@/vitest.setup';
 
 describe('Settings Utilities', () => {
   beforeEach(() => {
@@ -9,7 +10,7 @@ describe('Settings Utilities', () => {
 
   describe('getSettings', () => {
     it('should return default settings when no settings are stored', async () => {
-      vi.mocked(chrome.storage.sync.get).mockResolvedValue({});
+      mockedAsync(chrome.storage.sync.get).mockResolvedValue({});
 
       const result = await getSettings();
 
@@ -22,7 +23,7 @@ describe('Settings Utilities', () => {
         autoTranslate: false,
       };
 
-      vi.mocked(chrome.storage.sync.get).mockResolvedValue(storedSettings);
+      mockedAsync(chrome.storage.sync.get).mockResolvedValue(storedSettings);
 
       const result = await getSettings();
 
@@ -41,7 +42,7 @@ describe('Settings Utilities', () => {
         targetLanguage: 'ja',
       };
 
-      vi.mocked(chrome.storage.sync.get).mockResolvedValue(storedSettings);
+      mockedAsync(chrome.storage.sync.get).mockResolvedValue(storedSettings);
 
       const result = await getSettings();
 
@@ -57,7 +58,7 @@ describe('Settings Utilities', () => {
         autoTranslate: false,
       };
 
-      vi.mocked(chrome.storage.sync.set).mockResolvedValue(undefined);
+      mockedAsync(chrome.storage.sync.set).mockResolvedValue(undefined);
 
       await updateSettings(updates);
 
@@ -69,7 +70,7 @@ describe('Settings Utilities', () => {
         cacheTTLDays: 14,
       };
 
-      vi.mocked(chrome.storage.sync.set).mockResolvedValue(undefined);
+      mockedAsync(chrome.storage.sync.set).mockResolvedValue(undefined);
 
       await updateSettings(updates);
 
@@ -83,7 +84,7 @@ describe('Settings Utilities', () => {
         },
       };
 
-      vi.mocked(chrome.storage.sync.set).mockResolvedValue(undefined);
+      mockedAsync(chrome.storage.sync.set).mockResolvedValue(undefined);
 
       await updateSettings(updates);
 

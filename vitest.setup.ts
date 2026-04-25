@@ -1,5 +1,12 @@
 import { vi } from 'vitest';
 
+// Pick the Promise-returning overload of an overloaded mock function so that
+// vi.mocked() resolves to a sensible signature. Required for chrome.storage.*
+// APIs whose @types/chrome signatures expose callback overloads as the last
+// candidate; vi.mocked() picks the last overload, which returns void.
+export const mockedAsync = (fn: unknown) =>
+  vi.mocked(fn as (...args: unknown[]) => Promise<unknown>);
+
 // Mock Chrome Storage API
 const mockStorage = {
   local: {
