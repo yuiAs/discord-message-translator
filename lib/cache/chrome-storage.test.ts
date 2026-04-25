@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ChromeStorageCache } from './chrome-storage';
 import { TranslationCacheEntry } from '@/types/cache';
+import { mockedAsync } from '@/vitest.setup';
 
 describe('ChromeStorageCache', () => {
   let cache: ChromeStorageCache;
@@ -18,11 +19,11 @@ describe('ChromeStorageCache', () => {
         timestamp: Date.now(),
       };
 
-      vi.mocked(chrome.storage.local.get).mockResolvedValue({
+      mockedAsync(chrome.storage.local.get).mockResolvedValue({
         [`cache_${messageId}`]: entry,
       });
 
-      vi.mocked(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
+      mockedAsync(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
 
       const result = await cache.get(messageId);
 
@@ -33,7 +34,7 @@ describe('ChromeStorageCache', () => {
     it('should return null if entry does not exist', async () => {
       const messageId = 'non-existent';
 
-      vi.mocked(chrome.storage.local.get).mockResolvedValue({});
+      mockedAsync(chrome.storage.local.get).mockResolvedValue({});
 
       const result = await cache.get(messageId);
 
@@ -47,12 +48,12 @@ describe('ChromeStorageCache', () => {
         timestamp: Date.now() - 10 * 24 * 60 * 60 * 1000, // 10 days ago
       };
 
-      vi.mocked(chrome.storage.local.get).mockResolvedValue({
+      mockedAsync(chrome.storage.local.get).mockResolvedValue({
         [`cache_${messageId}`]: expiredEntry,
       });
 
-      vi.mocked(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
-      vi.mocked(chrome.storage.local.remove).mockResolvedValue(undefined);
+      mockedAsync(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
+      mockedAsync(chrome.storage.local.remove).mockResolvedValue(undefined);
 
       const result = await cache.get(messageId);
 
@@ -69,8 +70,8 @@ describe('ChromeStorageCache', () => {
         timestamp: Date.now(),
       };
 
-      vi.mocked(chrome.storage.local.getBytesInUse).mockResolvedValue(1000);
-      vi.mocked(chrome.storage.local.set).mockResolvedValue(undefined);
+      mockedAsync(chrome.storage.local.getBytesInUse).mockResolvedValue(1000);
+      mockedAsync(chrome.storage.local.set).mockResolvedValue(undefined);
 
       await cache.set(messageId, entry);
 
@@ -84,7 +85,7 @@ describe('ChromeStorageCache', () => {
     it('should remove entry from storage', async () => {
       const messageId = 'test-message-3';
 
-      vi.mocked(chrome.storage.local.remove).mockResolvedValue(undefined);
+      mockedAsync(chrome.storage.local.remove).mockResolvedValue(undefined);
 
       await cache.delete(messageId);
 
@@ -100,8 +101,8 @@ describe('ChromeStorageCache', () => {
         otherKey: 'value',
       };
 
-      vi.mocked(chrome.storage.local.get).mockResolvedValue(allData);
-      vi.mocked(chrome.storage.local.remove).mockResolvedValue(undefined);
+      mockedAsync(chrome.storage.local.get).mockResolvedValue(allData);
+      mockedAsync(chrome.storage.local.remove).mockResolvedValue(undefined);
 
       await cache.clear();
 
@@ -123,7 +124,7 @@ describe('ChromeStorageCache', () => {
         timestamp: Date.now(),
       };
 
-      vi.mocked(chrome.storage.local.get).mockResolvedValue({
+      mockedAsync(chrome.storage.local.get).mockResolvedValue({
         cache_message1: entry1,
         cache_message2: entry2,
         otherKey: 'value',
@@ -149,13 +150,13 @@ describe('ChromeStorageCache', () => {
         timestamp: now - 10 * 24 * 60 * 60 * 1000, // 10 days ago
       };
 
-      vi.mocked(chrome.storage.local.get).mockResolvedValue({
+      mockedAsync(chrome.storage.local.get).mockResolvedValue({
         cache_valid: validEntry,
         cache_expired: expiredEntry,
       });
 
-      vi.mocked(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
-      vi.mocked(chrome.storage.local.remove).mockResolvedValue(undefined);
+      mockedAsync(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
+      mockedAsync(chrome.storage.local.remove).mockResolvedValue(undefined);
 
       await cache.cleanupExpired();
 
@@ -165,9 +166,9 @@ describe('ChromeStorageCache', () => {
 
   describe('getStats', () => {
     it('should return stats for empty cache', async () => {
-      vi.mocked(chrome.storage.local.get).mockResolvedValue({});
-      vi.mocked(chrome.storage.local.getBytesInUse).mockResolvedValue(0);
-      vi.mocked(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
+      mockedAsync(chrome.storage.local.get).mockResolvedValue({});
+      mockedAsync(chrome.storage.local.getBytesInUse).mockResolvedValue(0);
+      mockedAsync(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
 
       const stats = await cache.getStats();
 
@@ -189,13 +190,13 @@ describe('ChromeStorageCache', () => {
         timestamp: now,
       };
 
-      vi.mocked(chrome.storage.local.get).mockResolvedValue({
+      mockedAsync(chrome.storage.local.get).mockResolvedValue({
         cache_message1: entry1,
         cache_message2: entry2,
       });
 
-      vi.mocked(chrome.storage.local.getBytesInUse).mockResolvedValue(5 * 1024 * 1024); // 5MB
-      vi.mocked(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
+      mockedAsync(chrome.storage.local.getBytesInUse).mockResolvedValue(5 * 1024 * 1024); // 5MB
+      mockedAsync(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
 
       const stats = await cache.getStats();
 
@@ -221,14 +222,14 @@ describe('ChromeStorageCache', () => {
         timestamp: now - 8 * 24 * 60 * 60 * 1000, // 8 days ago
       };
 
-      vi.mocked(chrome.storage.local.get).mockResolvedValue({
+      mockedAsync(chrome.storage.local.get).mockResolvedValue({
         cache_valid: validEntry,
         cache_expired1: expiredEntry1,
         cache_expired2: expiredEntry2,
       });
 
-      vi.mocked(chrome.storage.local.getBytesInUse).mockResolvedValue(2 * 1024 * 1024); // 2MB
-      vi.mocked(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
+      mockedAsync(chrome.storage.local.getBytesInUse).mockResolvedValue(2 * 1024 * 1024); // 2MB
+      mockedAsync(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
 
       const stats = await cache.getStats();
 
@@ -244,12 +245,12 @@ describe('ChromeStorageCache', () => {
         timestamp: now,
       };
 
-      vi.mocked(chrome.storage.local.get).mockResolvedValue({
+      mockedAsync(chrome.storage.local.get).mockResolvedValue({
         cache_message1: entry,
       });
 
-      vi.mocked(chrome.storage.local.getBytesInUse).mockResolvedValue(9 * 1024 * 1024); // 9MB (90%)
-      vi.mocked(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
+      mockedAsync(chrome.storage.local.getBytesInUse).mockResolvedValue(9 * 1024 * 1024); // 9MB (90%)
+      mockedAsync(chrome.storage.sync.get).mockResolvedValue({ cacheTTLDays: 7 });
 
       const stats = await cache.getStats();
 

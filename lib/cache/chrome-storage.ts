@@ -8,12 +8,14 @@ const CLEANUP_TARGET = 0.6; // Reduce to 60%
 
 export class ChromeStorageCache implements ITranslationStorage {
   private async getTTLDays(): Promise<number> {
-    const settings = await chrome.storage.sync.get(['cacheTTLDays']);
+    const settings = await chrome.storage.sync.get<{ cacheTTLDays?: number }>(['cacheTTLDays']);
     return settings.cacheTTLDays || 7;
   }
 
   async get(messageId: string): Promise<TranslationCacheEntry | null> {
-    const result = await chrome.storage.local.get([`${CACHE_PREFIX}${messageId}`]);
+    const result = await chrome.storage.local.get<Partial<Record<string, TranslationCacheEntry>>>(
+      [`${CACHE_PREFIX}${messageId}`],
+    );
     const entry = result[`${CACHE_PREFIX}${messageId}`];
 
     if (!entry) return null;
