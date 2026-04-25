@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish Chrome extension
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify tag is on main or release/*
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Lightweight check via GitHub REST API.
+          # Returns branches where the tagged commit is the current HEAD.
+          BRANCHES=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/branches-where-head" \
+            --jq '.[].name')
+          echo "HEAD branches for ${GITHUB_SHA}:"
+          echo "${BRANCHES:-<none>}"
+          if echo "$BRANCHES" | grep -E '^(main|release/.*)$' >/dev/null; then
+            echo "OK: tag is on an allowed branch"
+          else
+            echo "ERROR: tag must point to HEAD of main or release/*"
+            exit 1
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Run tests
+        run: npm test -- --run
+
+      - name: Build and zip (Chrome)
+        run: npx wxt zip -b chrome
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: .output/*.zip
+          generate_release_notes: true
+          fail_on_unmatched_files: true
